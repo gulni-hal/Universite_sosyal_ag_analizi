@@ -11,6 +11,7 @@ from PyQt5.QtGui import QColor
 from .graph_canvas import GraphCanvas
 from .add_node_dialog import AddNodeDialog
 from .coloring_dialog import ColoringDialog
+from .add_edge_dialog import AddEdgeDialog
 import core.node
 import random
 import time
@@ -36,7 +37,9 @@ class MainWindow(QMainWindow):
 
         # SOL: Canvas
         # Renklendirme sonucunu canvas'a iletmek için güncellendi
-        self.canvas = GraphCanvas(graph, on_node_clicked=self.show_node_details)
+        self.canvas = GraphCanvas(graph,
+                                  on_node_clicked=self.show_node_details,
+                                  on_edge_clicked=self.show_edge_details)  # Güncellendi
         main_layout.addWidget(self.canvas, stretch=3)
 
         # SAĞ: Panel
@@ -72,6 +75,17 @@ class MainWindow(QMainWindow):
         self.btn_delete.clicked.connect(self.delete_selected_node)
         self.btn_delete.setEnabled(False)  # Başlangıçta pasif
         right_layout.addWidget(self.btn_delete)
+
+        self.btn_delete_edge = QPushButton("🔗 Bağlantıyı Sil")
+        self.btn_delete_edge.setStyleSheet("background-color: #ff9800; color: white;")
+        self.btn_delete_edge.clicked.connect(self.delete_selected_edge)
+        self.btn_delete_edge.setEnabled(False)
+        right_layout.addWidget(self.btn_delete_edge)
+
+        # Bağlantı ekleme butonu
+        self.btn_add_edge = QPushButton("🔗 Yeni Bağlantı Ekle")
+        self.btn_add_edge.clicked.connect(self.open_add_edge_dialog)
+        right_layout.addWidget(self.btn_add_edge)
 
         # 3. Renklendirme Butonu (YENİ)
         btn_color = QPushButton("🎨 Renklendir (Welsh-Powell)")
@@ -336,3 +350,101 @@ class MainWindow(QMainWindow):
             # Liste bittiyse durdur
             self.timer.stop()
             QMessageBox.information(self, "Bitti", "Arama tamamlandı!")
+
+    def show_edge_details(self, edge):
+        self.selected_edge = edge
+        self.label_adi.setText("Bağlantı Seçildi")
+        self.label_detay.setText(f"{edge.node1.adi} ↔️ {edge.node2.adi}")
+        self.btn_delete_edge.setEnabled(True)
+        self.btn_edit.setEnabled(False)
+        self.btn_delete.setEnabled(False)
+
+    def delete_selected_edge(self):
+        """Seçili kenarı (bağlantıyı) kullanıcı onayıyla hem DB'den hem de Graptan siler."""
+        if not hasattr(self, 'selected_edge') or self.selected_edge is None:
+            return
+
+        # Bağlantıdaki üniversitelerin isimlerini alalım
+        uni1_adi = self.selected_edge.node1.adi
+        uni2_adi = self.selected_edge.node2.adi
+        u1_id = self.selected_edge.node1.uni_id
+        u2_id = self.selected_edge.node2.uni_id
+
+        # --- ONAY PENCERESİ ---
+        soru_metni = f"<b>{uni1_adi}</b> ile <b>{uni2_adi}</b> arasındaki akademik bağlantı kalıcı olarak silinecek.\n\nEmin misiniz?"
+
+        onay = QMessageBox.question(
+            self,
+            "Bağlantıyı Silme Onayı",
+            soru_metni,
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+
+        # Kullanıcı "Hayır" dediyse işlemi durdur
+        if onay == QMessageBox.No:
+            return
+
+        # --- SİLME İŞLEMİ ---
+        try:
+            # 1. Veritabanından sil (data_loader.py içindeki Iliskiler tablosu)
+            self.loader.delete_relation(u1_id, u2_id)
+
+            # 2. Grafik yapısından sil (graph.py içindeki edges ve adj listesi)
+            self.graph.remove_edge(u1_id, u2_id)
+
+            # 3. UI Temizliği ve Güncelleme
+            self.selected_edge = None
+            self.btn_delete_edge.setEnabled(False)
+            self.label_adi.setText("Bağlantı Silindi")
+            self.label_detay.setText("")
+            self.canvas.update()
+
+            QMessageBox.information(self, "Başarılı", "Bağlantı başarıyla kaldırıldı.")
+
+        except Exception as e:
+            QMessageBox.critical(self, "Hata", f"Silme işlemi sırasında bir hata oluştu:\n{str(e)}")
+
+    def open_add_edge_dialog(self):
+        """İki üniversite seçip bağ kurmak için diyaloğu açar."""
+        from .add_edge_dialog import AddEdgeDialog
+        dialog = AddEdgeDialog(self.graph.nodes, self)
+
+        if dialog.exec_():
+            id1, id2 = dialog.get_data()
+
+            if id1 == id2:
+                QMessageBox.warning(self, "Hata", "Bir üniversiteyi kendisiyle eşleyemezsiniz.")
+                return
+
+            try:
+                # DB'ye eklemeyi dene ve sonucu al
+                result = self.loader.add_relation(id1, id2)
+
+                if result is True:
+                    # 1. Eğer başarıyla eklendiyse belleğe de ekle
+                    self.graph.add_edge(id1, id2)
+                    self.canvas.update()
+
+                    uni1_adi = self.graph.nodes[id1].adi
+                    uni2_adi = self.graph.nodes[id2].adi
+                    QMessageBox.information(
+                        self,
+                        "Başarılı",
+                        f"{uni1_adi} ve {uni2_adi} arasında yeni bir bağlantı oluşturuldu."
+                    )
+                elif result is False:
+                    # 2. Eğer bağlantı zaten varsa uyarı ver
+                    uni1_adi = self.graph.nodes[id1].adi
+                    uni2_adi = self.graph.nodes[id2].adi
+                    QMessageBox.warning(
+                        self,
+                        "Mevcut Bağlantı",
+                        f"{uni1_adi} ve {uni2_adi} arasında zaten bir bağlantı bulunuyor."
+                    )
+                else:
+                    # 3. Teknik bir hata (None) döndüyse
+                    QMessageBox.critical(self, "Hata", "Veritabanı işlemi sırasında bir hata oluştu.")
+
+            except Exception as e:
+                QMessageBox.critical(self, "Hata", f"Beklenmedik bir hata oluştu:\n{str(e)}")

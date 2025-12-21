@@ -20,12 +20,14 @@ class GraphCanvas(QWidget):
     COLOR_PALETTE = [info["color"] for info in COLOR_PALETTE_INFO]
     COLOR_NAME_MAP = {info["id"]: info["name"] for info in COLOR_PALETTE_INFO}
 
-    def __init__(self, graph, on_node_clicked=None, parent=None):
+    def __init__(self, graph, on_node_clicked=None, on_edge_clicked=None, coloring_result=None, parent=None):
         super().__init__(parent)
         self.algo_nodes = []
         self.graph = graph
         self.on_node_clicked = on_node_clicked
         self.coloring_result = {}
+        self.on_edge_clicked = on_edge_clicked  # Yeni callback
+        self.selected_edge = None
 
         # --- YENİ: Vurgulanacak yol listesi ---
         # Format: [Node1, Node2, Node3...]
@@ -186,3 +188,26 @@ class GraphCanvas(QWidget):
                 if (dx * dx + dy * dy) <= (self.node_radius ** 2):
                     if self.on_node_clicked: self.on_node_clicked(node)
                     return
+
+            self.check_edge_click(real_x, real_y)
+
+    def check_edge_click(self, x, y):
+        threshold = 5.0  # Tıklama hassasiyeti (pixel)
+        for edge in self.graph.edges:
+            x1, y1 = edge.node1.x, edge.node1.y
+            x2, y2 = edge.node2.x, edge.node2.y
+
+            # Noktanın doğru parçasına olan uzaklığını hesapla
+            dist = self.dist_to_line(x, y, x1, y1, x2, y2)
+            if dist < threshold:
+                if self.on_edge_clicked:
+                    self.on_edge_clicked(edge)
+                return
+
+    def dist_to_line(self, px, py, x1, y1, x2, y2):
+        # Klasik nokta-doğru parçası uzaklık formülü
+        L2 = (x2 - x1) ** 2 + (y2 - y1) ** 2
+        if L2 == 0: return ((px - x1) ** 2 + (py - y1) ** 2) ** 0.5
+        t = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / L2
+        t = max(0, min(1, t))
+        return ((px - (x1 + t * (x2 - x1))) ** 2 + (py - (y1 + t * (y2 - y1))) ** 2) ** 0.5
