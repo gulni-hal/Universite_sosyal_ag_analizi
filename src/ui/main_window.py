@@ -279,10 +279,9 @@ class MainWindow(QMainWindow):
             self.canvas.update()  # Grafikteki ismin değişmesi için
 
     def open_path_dialog(self):
-        # Üniversite listesini al
         uni_list = self.loader.get_university_names()
-
         dialog = PathDialog(uni_list, self)
+
         if dialog.exec_():
             start_id, end_id, start_name, end_name = dialog.get_selection()
 
@@ -290,50 +289,70 @@ class MainWindow(QMainWindow):
                 QMessageBox.warning(self, "Hata", "Başlangıç ve Bitiş aynı olamaz!")
                 return
 
-            # Algoritmayı Çalıştır
+            # --- SÜRE ÖLÇÜMÜ BAŞLANGIÇ ---
+            start_time = time.perf_counter()
+
             cost, path = self.graph.dijkstra(start_id, end_id)
 
+            end_time = time.perf_counter()
+            elapsed_time = end_time - start_time
+            # --- SÜRE ÖLÇÜMÜ BİTİŞ ---
+
             if cost == float('inf'):
-                QMessageBox.warning(self, "Sonuç", f"{start_name} ile {end_name} arasında bir bağlantı yolu yok.")
-                self.canvas.set_path([])  # Temizle
+                QMessageBox.warning(self, "Sonuç",
+                                    f"{start_name} ile {end_name} arasında bir bağlantı yolu yok.<br>"
+                                    f"Arama Süresi: {elapsed_time:.8f} saniye")
+                self.canvas.set_path([])
             else:
                 self.canvas.set_path(path)
                 QMessageBox.information(self, "Yol Bulundu",
-                                        f"Rota: {start_name} -> {end_name}\n"
-                                        f"Toplam Maliyet: {cost:.4f}\n"
-                                        f"Adım Sayısı: {len(path) - 1}")
+                                        f"<b>Rota:</b> {start_name} → {end_name}<br>"
+                                        f"<b>Toplam Maliyet:</b> {cost:.4f}<br>"
+                                        f"<b>Adım Sayısı:</b> {len(path) - 1}<br>"
+                                        f"<b>Algoritma Çalışma Süresi:</b> {elapsed_time:.8f} saniye")
 
     # ... (Sınıfın diğer metotları) ...
 
     def run_algo(self, algo_type):
-        """BFS veya DFS animasyonunu başlatır."""
+        """BFS veya DFS animasyonunu başlatır ve çalışma süresini hesaplar."""
         if not self.selected_node:
             QMessageBox.warning(self, "Uyarı", f"{algo_type} başlatmak için haritadan bir Başlangıç Düğümü seçin!")
             return
 
-        # 1. Algoritmayı çalıştırıp sırayı al
         start_id = self.selected_node.uni_id
+
+        # --- SÜRE ÖLÇÜMÜ BAŞLANGIÇ ---
+        start_time = time.perf_counter()
+
         if algo_type == "BFS":
             self.animation_sequence = self.graph.bfs(start_id)
         else:
             self.animation_sequence = self.graph.dfs(start_id)
 
+        end_time = time.perf_counter()
+        elapsed_time = end_time - start_time
+        # --- SÜRE ÖLÇÜMÜ BİTİŞ ---
+
         if not self.animation_sequence:
             return
 
-        # 2. Animasyon Hazırlığı
-        self.canvas.highlighted_path = []  # Varsa eski yolu temizle
-        self.canvas.algo_nodes = []  # Temizle
+        # Animasyon Hazırlığı
+        self.canvas.highlighted_path = []
+        self.canvas.algo_nodes = []
         self.canvas.update()
 
-        # Bilgi ver
-        QMessageBox.information(self, "Başlıyor",
-                                f"{algo_type} Algoritması\nBaşlangıç: {self.selected_node.adi}\nToplam Gezilecek: {len(self.animation_sequence)}")
+        # Bilgi ve Süre Gösterimi
+        QMessageBox.information(self, "Algoritma Tamamlandı",
+                                f"<b>{algo_type} Algoritması Analizi Bitti</b><br><br>"
+                                f"• Başlangıç: {self.selected_node.adi}<br>"
+                                f"• Gezilecek Toplam Düğüm: {len(self.animation_sequence)}<br>"
+                                f"• Algoritma Çalışma Süresi:</b> {elapsed_time:.8f} saniye<br><br>"
+                                f"Animasyon başlatılıyor")
 
-        # 3. Timer Başlat (Her 200ms'de bir adım)
+        # Timer Başlat
         self.timer = QTimer()
         self.timer.timeout.connect(self.next_animation_step)
-        self.timer.start(200)  # Hızı buradan ayarla (düşük = hızlı)
+        self.timer.start(200)
 
     def next_animation_step(self):
         """Timer her çalıştığında bir sonraki düğümü boyar."""

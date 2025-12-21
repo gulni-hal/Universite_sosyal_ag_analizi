@@ -32,7 +32,7 @@ class Exporter:
         try:
             with open(output_path, 'w', newline='', encoding='utf-8-sig') as csvfile:
                 # YENİ ALAN: Renk Adı
-                fieldnames = ['ID', 'Üniversite Adı', 'Şehir', 'Renk ID', 'Renk Adı']
+                fieldnames = ['ID', 'Üniversite Adı', 'Şehir', 'Renk ID', 'Renk Adı', 'Komşular']
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=delimiter)
 
                 writer.writeheader()
@@ -43,13 +43,18 @@ class Exporter:
                     mapped_color_id = ((color_id - 1) % palette_size) + 1
                     color_name = color_map.get(mapped_color_id, f"Diğer Renk ({color_id})")
 
+                    neighbor_ids = graph.get_neighbors(uni_id)
+                    neighbor_names = [graph.nodes[nid].adi for nid in neighbor_ids if nid in graph.nodes]
+                    neighbors_str = ", ".join(sorted(neighbor_names))
+
                     if node:
                         writer.writerow({
                             'ID': node.uni_id,
                             'Üniversite Adı': node.adi,
                             'Şehir': node.sehir,
                             'Renk ID': color_id,
-                            'Renk Adı': color_name  # <<< YENİ ALAN
+                            'Renk Adı': color_name,  # <<< YENİ ALAN
+                            'Komşular': neighbors_str
                         })
 
             return output_path

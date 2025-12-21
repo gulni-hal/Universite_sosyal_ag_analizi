@@ -28,15 +28,15 @@ class ColoringDialog(QDialog):
         self.graph = graph
         self.coloring = coloring
         self.setWindowTitle("🎨 Welsh-Powell Renklendirme Sonuçları")
-        self.setMinimumSize(600, 400)
+        self.setMinimumSize(800, 500)
         self.exporter = Exporter()
 
         main_layout = QVBoxLayout(self)
 
         # Tablo Oluşturma
         self.table_widget = QTableWidget()
-        self.table_widget.setColumnCount(5)
-        self.table_widget.setHorizontalHeaderLabels(['ID', 'Üniversite Adı', 'Şehir', 'Renk ID', 'Renk Adı'])
+        self.table_widget.setColumnCount(6)
+        self.table_widget.setHorizontalHeaderLabels(['ID', 'Üniversite Adı', 'Şehir', 'Renk ID', 'Renk Adı', 'Komşular'])
         self.table_widget.setEditTriggers(QAbstractItemView.NoEditTriggers)  # Düzenlemeyi engelle
 
         # Sütunları içeriğe göre ayarla
@@ -66,12 +66,17 @@ class ColoringDialog(QDialog):
                 continue
 
             color_name = COLOR_NAMES.get(color_id, f"Renk {color_id}")
+            # Komşu isimlerini al
+            neighbor_ids = self.graph.get_neighbors(uni_id)
+            neighbor_names = [self.graph.nodes[nid].adi for nid in neighbor_ids if nid in self.graph.nodes]
+            neighbors_str = ", ".join(sorted(neighbor_names))
 
             self.table_widget.setItem(row, 0, QTableWidgetItem(str(node.uni_id)))
             self.table_widget.setItem(row, 1, QTableWidgetItem(node.adi))
             self.table_widget.setItem(row, 2, QTableWidgetItem(node.sehir))
             self.table_widget.setItem(row, 3, QTableWidgetItem(str(color_id)))
             self.table_widget.setItem(row, 4, QTableWidgetItem(color_name))
+            self.table_widget.setItem(row, 5, QTableWidgetItem(neighbors_str))
 
             row += 1
 

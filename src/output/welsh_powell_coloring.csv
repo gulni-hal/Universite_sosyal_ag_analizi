@@ -1,10 +1,10 @@
-﻿ID,Üniversite Adı,Şehir,Renk ID,Renk Adı
-8,Kocaeli Üniversitesi,Kocaeli,1,Kırmızı
-17,Gazi Üniversitesi,Ankara,1,Kırmızı
-5,İstanbul Üniversitesi,İstanbul,1,Kırmızı
-3,İstanbul Teknik Üniversitesi (İTÜ),İstanbul,2,Yeşil
-9,Sakarya Üniversitesi,Sakarya,2,Yeşil
-1,Hacettepe Üniversitesi,Ankara,2,Yeşil
-15,Koç Üniversitesi,İstanbul,3,Mavi
-4,Orta Doğu Teknik Üniversitesi (ODTÜ),Ankara,3,Mavi
-18,Ankara Üniversitesi,Ankara,3,Mavi
+﻿ID,Üniversite Adı,Şehir,Renk ID,Renk Adı,Komşular
+8,Kocaeli Üniversitesi,Kocaeli,1,Kırmızı,"Hacettepe Üniversitesi, Koç Üniversitesi, Sakarya Üniversitesi, İstanbul Teknik Üniversitesi (İTÜ)"
+4,Orta Doğu Teknik Üniversitesi (ODTÜ),Ankara,1,Kırmızı,"Gazi Üniversitesi, Sakarya Üniversitesi"
+5,İstanbul Üniversitesi,İstanbul,1,Kırmızı,"Koç Üniversitesi, Sakarya Üniversitesi"
+18,Ankara Üniversitesi,Ankara,1,Kırmızı,"Gazi Üniversitesi, Hacettepe Üniversitesi"
+1,Hacettepe Üniversitesi,Ankara,2,Yeşil,"Ankara Üniversitesi, Kocaeli Üniversitesi, İstanbul Teknik Üniversitesi (İTÜ)"
+9,Sakarya Üniversitesi,Sakarya,2,Yeşil,"Kocaeli Üniversitesi, Orta Doğu Teknik Üniversitesi (ODTÜ), İstanbul Üniversitesi"
+15,Koç Üniversitesi,İstanbul,2,Yeşil,"Kocaeli Üniversitesi, İstanbul Teknik Üniversitesi (İTÜ), İstanbul Üniversitesi"
+17,Gazi Üniversitesi,Ankara,2,Yeşil,"Ankara Üniversitesi, Orta Doğu Teknik Üniversitesi (ODTÜ)"
+3,İstanbul Teknik Üniversitesi (İTÜ),İstanbul,3,Mavi,"Hacettepe Üniversitesi, Kocaeli Üniversitesi, Koç Üniversitesi"
