@@ -334,3 +334,95 @@ class Graph:
                         stack.append(neighbor_id)
 
         return order
+
+    # core/graph.py içine eklenecek metot
+
+    def a_star(self, start_id: int, end_id: int):
+        """
+        A* algoritması ile en kısa yolu bulur.
+        h(n): Sezgisel fonksiyon olarak düğümlerin Canvas üzerindeki koordinatlarını kullanır.
+        """
+        if start_id not in self.nodes or end_id not in self.nodes:
+            return float('inf'), []
+
+        target_node = self.nodes[end_id]
+
+        # Sezgisel Fonksiyon (Heuristic): Kuş uçuşu mesafe (Öklid)
+        def heuristic(node_id):
+            n = self.nodes[node_id]
+            # Düğümlerin x ve y koordinatlarını kullanarak uzaklık hesaplar
+            return math.sqrt((n.x - target_node.x) ** 2 + (n.y - target_node.y) ** 2)
+
+        # Priority Queue: (f_score, current_id)
+        # f_score = g_score (gerçek maliyet) + h_score (tahmini kalan maliyet)
+        queue = [(0 + heuristic(start_id), start_id)]
+
+        # Başlangıçtan itibaren katedilen gerçek maliyet
+        g_scores = {node_id: float('inf') for node_id in self.nodes}
+        g_scores[start_id] = 0
+
+        predecessors = {node_id: None for node_id in self.nodes}
+
+        while queue:
+            # En düşük f_score değerine sahip düğümü al
+            _, current_id = heapq.heappop(queue)
+
+            if current_id == end_id:
+                break
+
+            for neighbor_id in self.adj.get(current_id, set()):
+                # Mevcut dinamik ağırlık hesaplama fonksiyonunuzu kullanıyoruz
+                weight = self.calculate_weight(self.nodes[current_id], self.nodes[neighbor_id])
+                tentative_g_score = g_scores[current_id] + weight
+
+                if tentative_g_score < g_scores[neighbor_id]:
+                    # Daha iyi bir yol bulundu, güncelle
+                    predecessors[neighbor_id] = current_id
+                    g_scores[neighbor_id] = tentative_g_score
+                    f_score = tentative_g_score + heuristic(neighbor_id)
+                    heapq.heappush(queue, (f_score, neighbor_id))
+
+        # Yolu geri oluşturma (Backtracking)
+        path = []
+        curr = end_id
+        if g_scores[end_id] == float('inf'):
+            return float('inf'), []
+
+        while curr is not None:
+            path.insert(0, self.nodes[curr])
+            curr = predecessors[curr]
+
+        return g_scores[end_id], path
+
+    # core/graph.py içine eklenecek metot
+
+    # core/graph.py içindeki metodu bu şekilde güncelleyin:
+
+    def get_top_5_influential_unis(self):
+        """
+        Derece merkeziliği en yüksek olan ilk 5 üniversiteyi ve
+        bağlantı ağırlıklarını hesaplar.
+        """
+        analysis_data = []
+        for uni_id, node in self.nodes.items():
+            degree = self.get_degree(uni_id)
+            neighbors = self.get_neighbors(uni_id)
+
+            # Bu düğüme bağlı tüm kenarların ağırlık toplamı
+            total_weight = 0
+            for neighbor_id in neighbors:
+                # calculate_weight metodunu kullanarak dinamik ağırlığı alıyoruz
+                total_weight += self.calculate_weight(node, self.nodes[neighbor_id])
+
+            analysis_data.append({
+                "uni_id": uni_id,
+                "adi": node.adi,
+                "sehir": node.sehir,
+                "derece": degree,
+                "toplam_agirlik": round(total_weight, 2),
+                "ortalama_agirlik": round(total_weight / degree, 2) if degree > 0 else 0
+            })
+
+        # Önce dereceye, sonra toplam ağırlığa göre azalan sıralama
+        sorted_list = sorted(analysis_data, key=lambda x: (x['derece'], x['toplam_agirlik']), reverse=True)
+        return sorted_list[:5]

@@ -60,3 +60,32 @@ class Exporter:
             return output_path
         except Exception as e:
             raise Exception(f"CSV dışa aktarma hatası: {e}")
+
+    # core/exporter.py içine eklenecek metot:
+
+    def export_centrality_to_csv(self, data, filename="etki_analizi.csv"):
+        """
+        Merkezilik analizi sonuçlarını (derece ve ağırlıklar) CSV olarak dışa aktarır.
+        """
+        import os, csv
+        output_path = os.path.join(self.output_dir, filename)
+
+        try:
+            with open(output_path, 'w', newline='', encoding='utf-8-sig') as csvfile:
+                fieldnames = ['Sıra', 'Üniversite Adı', 'Şehir', 'Derece (Bağlantı Sayısı)', 'Toplam Ağırlık',
+                              'Ortalama Ağırlık']
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+                writer.writeheader()
+                for i, row in enumerate(data, 1):
+                    writer.writerow({
+                        'Sıra': i,
+                        'Üniversite Adı': row['adi'],
+                        'Şehir': row['sehir'],
+                        'Derece (Bağlantı Sayısı)': row['derece'],
+                        'Toplam Ağırlık': row['toplam_agirlik'],
+                        'Ortalama Ağırlık': row['ortalama_agirlik']
+                    })
+            return output_path
+        except Exception as e:
+            raise Exception(f"Merkezilik CSV dışa aktarma hatası: {e}")

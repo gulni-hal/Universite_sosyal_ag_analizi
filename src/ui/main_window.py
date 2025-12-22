@@ -5,8 +5,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QVBoxLayout,
-                             QHBoxLayout, QFrame, QPushButton, QMessageBox)
-
+                             QHBoxLayout, QFrame, QPushButton, QMessageBox, QFileDialog,)
 from PyQt5.QtGui import QColor
 from .graph_canvas import GraphCanvas
 from .add_node_dialog import AddNodeDialog
@@ -111,6 +110,19 @@ class MainWindow(QMainWindow):
         btn_path.clicked.connect(self.open_path_dialog)
         right_layout.addWidget(btn_path)
 
+        # ui/main_window.py -> __init__ metodunda buton grubuna ekleyin
+        self.btn_astar = QPushButton("🚀 En Kısa Yol (A*)")
+        self.btn_astar.setStyleSheet("background-color: #3F51B5; color: white; font-weight: bold; margin-top: 10px;")
+        self.btn_astar.clicked.connect(self.run_astar_analysis)
+        right_layout.addWidget(self.btn_astar)
+
+        # ui/main_window.py -> __init__ metodu içinde
+        self.btn_centrality = QPushButton("📊 En Etkili 5 Üniversite")
+        self.btn_centrality.setStyleSheet(
+            "background-color: #607D8B; color: white; font-weight: bold; margin-top: 10px;")
+        self.btn_centrality.clicked.connect(self.show_centrality_table)
+        right_layout.addWidget(self.btn_centrality)  # Sağ panele ekler
+
         # 7. Ekle Butonu
         btn_add = QPushButton("➕ Yeni Üniversite Ekle")
         btn_add.setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold; margin-top: 10px;")
@@ -119,6 +131,10 @@ class MainWindow(QMainWindow):
 
         right_layout.addStretch()
         main_layout.addWidget(right_panel, stretch=1)
+
+        self.btn_import = QPushButton("📥 JSON Veri İçe Aktar")
+        self.btn_import.clicked.connect(self.import_json_action)
+        right_layout.addWidget(self.btn_import)
 
 
 
@@ -467,3 +483,110 @@ class MainWindow(QMainWindow):
 
             except Exception as e:
                 QMessageBox.critical(self, "Hata", f"Beklenmedik bir hata oluştu:\n{str(e)}")
+
+    # ui/main_window.py içine eklenecek yeni metot
+
+    def run_astar_analysis(self):
+        """PathDialog'u açar ve seçilen noktalar arasında A* algoritmasını çalıştırır."""
+        uni_list = self.loader.get_university_names()
+        from .path_dialog import PathDialog
+        dialog = PathDialog(uni_list, self)
+
+        if dialog.exec_():
+            start_id, end_id, start_name, end_name = dialog.get_selection()
+
+            if start_id == end_id:
+                QMessageBox.warning(self, "Hata", "Başlangıç ve Bitiş aynı olamaz!")
+                return
+
+            # Süre ölçümü başlangıcı
+            start_time = time.perf_counter()
+
+            # A* Algoritmasını çağır
+            cost, path = self.graph.a_star(start_id, end_id)
+
+            end_time = time.perf_counter()
+            elapsed_time = end_time - start_time
+
+            if cost == float('inf'):
+                QMessageBox.warning(self, "Sonuç",
+                                    f"{start_name} -> {end_name} arasında yol yok.\n"
+                                    f"Analiz Süresi: {elapsed_time:.8f} sn")
+                self.canvas.set_path([])
+            else:
+                # Bulunan yolu Canvas üzerinde çiz
+                self.canvas.set_path(path)
+                QMessageBox.information(self, "A* Sonucu",
+                                        f"<b>Başarı:</b> Hedefe ulaşıldı!<br>"
+                                        f"<b>Toplam Maliyet:</b> {cost:.4f}<br>"
+                                        f"<b>Algoritma Süresi:</b> {elapsed_time:.8f} saniye")
+
+    # ui/main_window.py içine eklenecek yeni metot
+
+    # ui/main_window.py içindeki show_centrality_table metodunu güncelleyin:
+
+    def show_centrality_table(self):
+        """En etkili 5 üniversiteyi tablo halinde gösterir ve CSV çıktısı sunar."""
+        top_5 = self.graph.get_top_5_influential_unis()
+
+        if not top_5:
+            QMessageBox.warning(self, "Uyarı", "Analiz edilecek veri bulunamadı.")
+            return
+
+        # HTML Tablo yapısı (Ağırlık sütunu eklendi)
+        table_html = """
+        <table border='1' cellpadding='5' style='border-collapse: collapse; width: 100%;'>
+            <tr style='background-color: #f2f2f2;'>
+                <th>Sıra</th>
+                <th>Üniversite Adı</th>
+                <th>Derece</th>
+                <th>Toplam Ağırlık</th>
+                <th>Ort. Ağırlık</th>
+            </tr>
+        """
+        for i, item in enumerate(top_5, 1):
+            table_html += f"""
+            <tr>
+                <td>{i}</td>
+                <td>{item['adi']}</td>
+                <td align='center'>{item['derece']}</td>
+                <td align='center'>{item['toplam_agirlik']}</td>
+                <td align='center'>{item['ortalama_agirlik']}</td>
+            </tr>
+            """
+        table_html += "</table>"
+
+        # Mesaj Kutusu Oluşturma
+        msg = QMessageBox(self)
+        msg.setWindowTitle("Etki Analizi Sonuçları")
+        msg.setText("<h3>En Etkili 5 Üniversite ve Bağlantı Güçleri</h3>")
+        msg.setInformativeText(table_html)
+
+        # CSV Dışa Aktar Butonu Ekleme
+        export_button = msg.addButton("📥 CSV Olarak Dışa Aktar", QMessageBox.ActionRole)
+        msg.addButton(QMessageBox.Ok)
+
+        msg.exec_()
+
+        # Eğer kullanıcı CSV butonuna bastıysa
+        if msg.clickedButton() == export_button:
+            try:
+                from core.exporter import Exporter
+                exporter = Exporter()
+                path = exporter.export_centrality_to_csv(top_5)
+                QMessageBox.information(self, "Başarılı", f"Dosya başarıyla kaydedildi:\n{path}")
+            except Exception as e:
+                QMessageBox.critical(self, "Hata", f"Dışa aktarma başarısız: {e}")
+
+    def import_json_action(self):
+        file_path, _ = QFileDialog.getOpenFileName(self, "JSON Dosyası Seç", "", "JSON Files (*.json)")
+        if file_path:
+            success = self.loader.import_from_json(file_path)
+            if success:
+                QMessageBox.information(self, "Başarılı", "Veriler içe aktarıldı. Uygulama yeniden başlatılıyor...")
+                # Verileri graf nesnesine tekrar yükle (ekranın güncellenmesi için)
+                self.graph = self.loader.load_graph()  # Mevcut load_graph metodunuz
+                self.canvas.graph = self.graph
+                self.canvas.update()
+            else:
+                QMessageBox.critical(self, "Hata", "JSON aktarımı sırasında bir sorun oluştu.")

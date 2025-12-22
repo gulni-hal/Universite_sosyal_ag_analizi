@@ -2,7 +2,7 @@ import sqlite3
 import networkx as nx
 from .node import Node
 from .graph import Graph
-
+import json
 
 class DataLoader:
     def __init__(self, db_path):
@@ -258,5 +258,36 @@ class DataLoader:
         except Exception as e:
             print(f"Bağlantı eklenirken DB hatası: {e}")
             return None  # Teknik bir hata oluştu
+        finally:
+            conn.close()
+
+    def import_from_json(self, file_path):
+        """JSON dosyasındaki verileri DB'ye aktarır."""
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        try:
+            # 1. Üniversiteleri ekle
+            for uni in data.get('universiteler', []):
+                cursor.execute("""
+                    INSERT OR REPLACE INTO Üniversiteler 
+                    (uni_id, adi, sehir, ilce, kurulus_yil, ogrenci_sayisi, fakulte_sayisi, akademik_sayisi, tr_siralama)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (uni['uni_id'], uni['adi'], uni['sehir'], uni['ilce'], uni['kurulus_yil'],
+                      uni['ogrenci_sayisi'], uni['fakulte_sayisi'], uni['akademik_sayisi'], uni['tr_siralama']))
+
+            # 2. İlişkileri ekle
+            for rel in data.get('iliskiler', []):
+                s, t = sorted((rel['source_id'], rel['target_id']))
+                cursor.execute("INSERT OR IGNORE INTO Iliskiler (source_id, target_id) VALUES (?, ?)", (s, t))
+
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"JSON Import Hatası: {e}")
+            return False
         finally:
             conn.close()
