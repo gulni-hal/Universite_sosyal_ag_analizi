@@ -124,6 +124,8 @@ class Graph:
         # PDF formülü direkt istiyor:
         total_diff = fark_akademik + fark_siralama + fark_ogrenci + fark_yas
         weight = 1 + math.sqrt(total_diff)
+        weight = weight/100
+
 
         return weight
 

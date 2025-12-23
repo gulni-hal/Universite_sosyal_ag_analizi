@@ -86,70 +86,130 @@ class GraphCanvas(QWidget):
         self.update()
 
     def paintEvent(self, event):
+        import math  # Matematik kütüphanesini burada veya en üstte import et
+
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         painter.save()
         painter.translate(self.offset)
         painter.scale(self.scale_factor, self.scale_factor)
 
-        # 1. Normal Kenarlar (Gri ve İnce)
-        pen = QPen(Qt.darkGray, 2)
-        painter.setPen(pen)
+        # 1. Normal Kenarlar (Parçalı Çizgi ve Eğimli Yazı)
+        pen_edge = QPen(Qt.darkGray, 2)
+        painter.setPen(pen_edge)
+
+        font = painter.font()
+        font.setPointSize(9)  # Yazı boyutu
+        painter.setFont(font)
+
         for edge in self.graph.edges:
             x1, y1 = edge.node1.x, edge.node1.y
             x2, y2 = edge.node2.x, edge.node2.y
-            painter.drawLine(int(x1), int(y1), int(x2), int(y2))
 
-        # 2. Vurgulanan Yol (Dijkstra - Kırmızı ve Kalın)
+            # Orta noktayı bul
+            mid_x = (x1 + x2) / 2
+            mid_y = (y1 + y2) / 2
+
+            # Açı ve Uzaklık Hesapları
+            dx = x2 - x1
+            dy = y2 - y1
+            length = math.sqrt(dx * dx + dy * dy)
+
+            # Eğer mesafe çok kısaysa (üst üsteyse) çizme
+            if length == 0: continue
+
+            # Birim vektörler (Çizgi yönü)
+            ux = dx / length
+            uy = dy / length
+
+            # Metin için boşluk (Yarıçap kadar, örneğin merkezden 15px sağa ve sola)
+            gap_size = 15
+
+            # Eğer çizgi çok kısaysa boşluk bırakma, direkt çiz
+            if length < gap_size * 3:
+                painter.setPen(pen_edge)
+                painter.drawLine(int(x1), int(y1), int(x2), int(y2))
+            else:
+                # 1. Parça: Başlangıçtan -> Ortadaki boşluğun başına
+                # Boşluk başı = Orta nokta - (Birim Vektör * Gap)
+                end_x1 = mid_x - (ux * gap_size)
+                end_y1 = mid_y - (uy * gap_size)
+
+                # 2. Parça: Ortadaki boşluğun sonundan -> Bitişe
+                start_x2 = mid_x + (ux * gap_size)
+                start_y2 = mid_y + (uy * gap_size)
+
+                painter.setPen(pen_edge)
+                painter.drawLine(int(x1), int(y1), int(end_x1), int(end_y1))
+                painter.drawLine(int(start_x2), int(start_y2), int(x2), int(y2))
+
+                # --- EĞİMLİ YAZI ---
+                painter.save()  # Koordinat sistemini kaydet
+
+                # Merkeze git
+                painter.translate(mid_x, mid_y)
+
+                # Açıyı hesapla (radyan -> derece)
+                angle_deg = math.degrees(math.atan2(dy, dx))
+
+                # Yazının ters durmaması için kontrol (Okunabilirlik)
+                if abs(angle_deg) > 90:
+                    angle_deg += 180
+
+                painter.rotate(angle_deg)  # Çizgiye paralel döndür
+
+                # Yazıyı çiz (0,0 artık orta nokta)
+                painter.setPen(QPen(Qt.darkBlue))
+                weight_text = f"{int(edge.weight)}"
+
+                # Metni tam ortalamak için ölçüm (isteğe bağlı ama şık durur)
+                metrics = painter.fontMetrics()
+                text_w = metrics.width(weight_text)
+                text_h = metrics.height()
+
+                # (x, y) -> Hafif yukarı kaydırarak tam ortaya koy
+                painter.drawText(int(-text_w / 2), int(text_h / 4), weight_text)
+
+                painter.restore()  # Koordinat sistemini geri yükle
+
+        # 2. Vurgulanan Yol (Dijkstra - Kırmızı)
         if self.highlighted_path and len(self.highlighted_path) > 1:
-            pen_path = QPen(Qt.red, 5)  # Kalınlık 5
+            pen_path = QPen(Qt.red, 5)
             painter.setPen(pen_path)
             for i in range(len(self.highlighted_path) - 1):
                 n1 = self.highlighted_path[i]
                 n2 = self.highlighted_path[i + 1]
                 painter.drawLine(int(n1.x), int(n1.y), int(n2.x), int(n2.y))
 
-        # 3. Düğümler
-        font = painter.font()
+        # 3. Düğümler (Aynı kalıyor)
+        font.setPointSize(10)
         font.setBold(True)
         painter.setFont(font)
 
         for node in self.graph.nodes.values():
             uni_id = node.uni_id
 
-            # Renk belirleme (Varsayılan Yeşil)
+            # Renk seçimi
             fill_color = QColor("#00FF00")
-
-            # Eğer Welsh-Powell çalıştıysa onun rengini kullan
             if self.coloring_result:
                 c_id = self.coloring_result.get(uni_id)
                 if c_id:
                     idx = (c_id - 1) % len(self.COLOR_PALETTE)
                     fill_color = self.COLOR_PALETTE[idx]
 
-            # --- DÜĞÜM DURUM KONTROLLERİ ---
-
-            # Öncelik 1: Eğer Node, Dijkstra yolunun bir parçasıysa
             if node in self.highlighted_path:
                 fill_color = QColor("white")
                 painter.setPen(QPen(Qt.red, 3))
-
-            # Öncelik 2: Eğer Node, BFS/DFS Animasyon listesindeyse (YENİ EKLENEN KISIM)
             elif hasattr(self, 'algo_nodes') and node in self.algo_nodes:
-                fill_color = QColor("#00BFFF")  # Mavi (Deep Sky Blue)
+                fill_color = QColor("#00BFFF")
                 painter.setPen(QPen(Qt.blue, 3))
-
-            # Öncelik 3: Normal Durum
             else:
                 painter.setPen(QPen(Qt.black, 2))
-
-            # -------------------------------
 
             painter.setBrush(QBrush(fill_color))
             painter.drawEllipse(int(node.x - self.node_radius), int(node.y - self.node_radius),
                                 self.node_radius * 2, self.node_radius * 2)
 
-            # Yazı rengi
             painter.setPen(QPen(Qt.black))
             painter.drawText(int(node.x - self.node_radius), int(node.y - self.node_radius - 5), node.adi)
 
