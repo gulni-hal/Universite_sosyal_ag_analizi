@@ -271,3 +271,4 @@ class GraphCanvas(QWidget):
         t = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / L2
         t = max(0, min(1, t))
         return ((px - (x1 + t * (x2 - x1))) ** 2 + (py - (y1 + t * (y2 - y1))) ** 2) ** 0.5
+

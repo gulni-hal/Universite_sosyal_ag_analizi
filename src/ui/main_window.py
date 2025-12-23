@@ -104,6 +104,7 @@ class MainWindow(QMainWindow):
         btn_dfs.clicked.connect(lambda: self.run_algo("DFS"))
         right_layout.addWidget(btn_dfs)
 
+
         # 6. Dijkstra Butonu (YENİ)
         btn_path = QPushButton("📍 En Kısa Yol (Dijkstra)")
         btn_path.setStyleSheet("background-color: #FF9800; color: white; font-weight: bold; margin-top: 10px;")
@@ -129,13 +130,21 @@ class MainWindow(QMainWindow):
         btn_add.clicked.connect(self.open_add_dialog)
         right_layout.addWidget(btn_add)
 
+        # 7. Topluluk Bulma Butonu (Gri - Blue Grey)
+        btn_community = QPushButton("🧩 Toplulukları Bul")
+        btn_community.setStyleSheet("background-color: #607D8B; color: white; font-weight: bold; margin-top: 10px;")
+        btn_community.clicked.connect(self.show_communities)
+        right_layout.addWidget(btn_community)
+
+
+
         right_layout.addStretch()
         main_layout.addWidget(right_panel, stretch=1)
+
 
         # self.btn_import = QPushButton("📥 JSON Veri İçe Aktar")
         # self.btn_import.clicked.connect(self.import_json_action)
         # right_layout.addWidget(self.btn_import)
-
 
 
     # ... Diğer metodlar (show_node_details, open_add_dialog, save_university, delete_selected_node, edit_selected_node)
@@ -592,3 +601,27 @@ class MainWindow(QMainWindow):
     #             self.canvas.update()
     #         else:
     #             QMessageBox.critical(self, "Hata", "JSON aktarımı sırasında bir sorun oluştu.")
+
+    def show_communities(self):
+        """Grafikteki ayrık toplulukları bulur ve gösterir."""
+        # 1. Graf sınıfındaki metodu çağır
+        if not hasattr(self.graph, 'find_connected_components'):
+            QMessageBox.critical(self, "Hata", "Graph sınıfında 'find_connected_components' metodu bulunamadı!")
+            return
+
+        components = self.graph.find_connected_components()
+        count = len(components)
+
+        # 2. Detaylı mesaj hazırla
+        msg_text = f"Analiz Sonucu:\nToplam {count} adet ayrık topluluk (grup) bulundu.\n\n"
+
+        for i, comp in enumerate(components, 1):
+            # Her gruptaki üniversite isimlerini al
+            uni_names = [node.adi for node in comp]
+            # Listeyi virgülle birleştir
+            names_str = ", ".join(uni_names)
+
+            msg_text += f"Grup {i} ({len(comp)} Üni): {names_str}\n\n"
+
+        # 3. Sonucu göster
+        QMessageBox.information(self, "Topluluk Analizi", msg_text)

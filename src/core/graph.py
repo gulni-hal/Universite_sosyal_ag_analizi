@@ -432,3 +432,23 @@ class Graph:
         # Önce dereceye, sonra toplam ağırlığa göre azalan sıralama
         sorted_list = sorted(analysis_data, key=lambda x: (x['derece'], x['toplam_agirlik']), reverse=True)
         return sorted_list[:5]
+
+    def find_connected_components(self):
+        """Grafikteki ayrık toplulukları (birbirinden kopuk adaları) bulur."""
+        visited = set()
+        components = []
+
+        for node_id in self.nodes:
+            if node_id not in visited:
+                component = []
+                queue = [node_id]
+                visited.add(node_id)
+                while queue:
+                    curr = queue.pop(0)
+                    component.append(self.nodes[curr])
+                    for neighbor in self.adj.get(curr, set()):
+                        if neighbor not in visited:
+                            visited.add(neighbor)
+                            queue.append(neighbor)
+                components.append(component)
+        return components
