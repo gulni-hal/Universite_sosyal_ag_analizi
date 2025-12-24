@@ -1,6 +1,6 @@
 ﻿Sıra,Üniversite Adı,Şehir,Derece (Bağlantı Sayısı),Toplam Ağırlık,Ortalama Ağırlık,Komşular
-1,Kocaeli Üniversitesi,Kocaeli,5,147263.32,29452.66,"Gazi Üniversitesi, Hacettepe Üniversitesi, Koç Üniversitesi, Sakarya Üniversitesi, İstanbul Teknik Üniversitesi (İTÜ)"
-2,Koç Üniversitesi,İstanbul,3,135126.24,45042.08,"Kocaeli Üniversitesi, İstanbul Teknik Üniversitesi (İTÜ), İstanbul Üniversitesi"
-3,Sakarya Üniversitesi,Sakarya,3,135038.38,45012.79,"Kocaeli Üniversitesi, Orta Doğu Teknik Üniversitesi (ODTÜ), İstanbul Üniversitesi"
-4,Gazi Üniversitesi,Ankara,3,74896.03,24965.34,"Ankara Üniversitesi, Kocaeli Üniversitesi, Orta Doğu Teknik Üniversitesi (ODTÜ)"
-5,İstanbul Teknik Üniversitesi (İTÜ),İstanbul,3,68973.8,22991.27,"Hacettepe Üniversitesi, Kocaeli Üniversitesi, Koç Üniversitesi"
+1,Kocaeli Üniversitesi,Kocaeli,5,1472.63,294.53,"Gazi Üniversitesi, Hacettepe Üniversitesi, Koç Üniversitesi, Sakarya Üniversitesi, İstanbul Teknik Üniversitesi (İTÜ)"
+2,Gazi Üniversitesi,Ankara,4,834.37,208.59,"Ankara Üniversitesi, Hacettepe Üniversitesi, Kocaeli Üniversitesi, Orta Doğu Teknik Üniversitesi (ODTÜ)"
+3,Hacettepe Üniversitesi,Ankara,4,596.98,149.24,"Ankara Üniversitesi, Gazi Üniversitesi, Kocaeli Üniversitesi, İstanbul Teknik Üniversitesi (İTÜ)"
+4,Koç Üniversitesi,İstanbul,3,1351.26,450.42,"Kocaeli Üniversitesi, İstanbul Teknik Üniversitesi (İTÜ), İstanbul Üniversitesi"
+5,Sakarya Üniversitesi,Sakarya,3,1350.38,450.13,"Kocaeli Üniversitesi, Orta Doğu Teknik Üniversitesi (ODTÜ), İstanbul Üniversitesi"
