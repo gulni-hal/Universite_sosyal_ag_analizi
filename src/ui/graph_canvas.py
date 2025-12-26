@@ -133,6 +133,11 @@ class GraphCanvas(QWidget):
             # Metin için boşluk (Yarıçap kadar, örneğin merkezden 15px sağa ve sola)
             gap_size = 15
 
+            if self.selected_edge == edge:
+                painter.setPen(QPen(Qt.yellow, 4))  # Seçili kenarı sarı ve kalın yap
+            else:
+                painter.setPen(pen_edge)
+
             # Eğer çizgi çok kısaysa boşluk bırakma, direkt çiz
             if length < gap_size * 3:
                 painter.setPen(pen_edge)

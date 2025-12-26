@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QVBoxLayout,
                              QHBoxLayout, QFrame, QPushButton, QMessageBox,
                              QAction, QToolBar, QDockWidget, QTabWidget,
                              QTextEdit, QFormLayout, QStyle, QApplication,
-                             QStackedWidget, QGraphicsDropShadowEffect,
+                             QStackedWidget, QGraphicsDropShadowEffect,QInputDialog, QComboBox,
                              QSizePolicy, QSpacerItem, QGroupBox, QTableWidget, QTableWidgetItem, QHeaderView, QDialog)
 from PyQt5.QtCore import Qt, QSize, QTimer, QPropertyAnimation, QEasingCurve, pyqtProperty
 from PyQt5.QtGui import QIcon, QFont, QPalette, QColor, QFontDatabase, QLinearGradient, QPainter
@@ -92,9 +92,12 @@ class CardWidget(QFrame):
         layout = QVBoxLayout()
         layout.setContentsMargins(20, 20, 20, 20)
 
+        # 🔽 🔽 🔽 EN ÖNEMLİ DEĞİŞİKLİK 🔽 🔽 🔽
+        self.title_label = None
+
         if title:
-            title_label = QLabel(title)
-            title_label.setStyleSheet("""
+            self.title_label = QLabel(title)   # 👈 self. EKLENDİ
+            self.title_label.setStyleSheet("""
                 QLabel {
                     font-size: 16px;
                     font-weight: bold;
@@ -103,11 +106,16 @@ class CardWidget(QFrame):
                     border-bottom: 2px solid #f0f0f0;
                 }
             """)
-            layout.addWidget(title_label)
+            layout.addWidget(self.title_label)
 
         self.content_layout = QVBoxLayout()
         layout.addLayout(self.content_layout)
         self.setLayout(layout)
+
+    # 👇 DIŞARIDAN GÜVENLİ BAŞLIK DEĞİŞTİRME
+    def setTitle(self, text):
+        if self.title_label:
+            self.title_label.setText(text)
 
 
 class MainWindow(QMainWindow):
@@ -118,7 +126,7 @@ class MainWindow(QMainWindow):
         self.selected_node = None
         self.coloring_result = {}
 
-        self.setWindowTitle("UniNet AI | Sosyal Ağ Analiz Platformu")
+        self.setWindowTitle("Sosyal Ağ Analiz Platformu")
         self.setMinimumSize(1400, 850)
         self.apply_modern_theme()
 
@@ -129,7 +137,7 @@ class MainWindow(QMainWindow):
 
     def init_ui(self):
         # 1. MERKEZİ ALAN (Grafik Canvas)
-        self.canvas = GraphCanvas(self.graph, on_node_clicked=self.show_node_details)
+        self.canvas = GraphCanvas(self.graph, on_node_clicked=self.show_node_details, on_edge_clicked=self.show_edge_details)
 
         canvas_wrapper = QWidget()
         canvas_layout = QVBoxLayout(canvas_wrapper)
@@ -199,14 +207,14 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout(header)
         layout.setContentsMargins(20, 10, 20, 10)
 
-        lbl_icon = QLabel("🕸️")
-        lbl_icon.setStyleSheet("font-size: 24px;")
+        # lbl_icon = QLabel("🕸️")
+        # lbl_icon.setStyleSheet("font-size: 24px;")
 
-        lbl_title = QLabel("Üniversite Etkileşim Analizi")
+        lbl_title = QLabel("Üniversite Sosyal Ağ Analizi")
         lbl_title.setFont(QFont("Segoe UI", 16, QFont.Bold))
         lbl_title.setStyleSheet("color: #2c3e50;")
 
-        layout.addWidget(lbl_icon)
+        # layout.addWidget(lbl_icon)
         layout.addSpacing(10)
         layout.addWidget(lbl_title)
         layout.addStretch()
@@ -240,50 +248,64 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(content)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        lbl_tools = QLabel("VERİ & ANALİZ")
-        lbl_tools.setAlignment(Qt.AlignCenter)
-        lbl_tools.setFixedHeight(50)
-        lbl_tools.setStyleSheet("background-color: #3e96f8; color: white; font-weight: bold; font-size: 14px;")
-        layout.addWidget(lbl_tools)
+        # --- 1. GRUP: ALGORİTMALAR ---
+        lbl_algo = QLabel("ALGORİTMALAR")
+        lbl_algo.setAlignment(Qt.AlignCenter)
+        lbl_algo.setFixedHeight(45)
+        lbl_algo.setStyleSheet("background-color: #3e96f8; color: white; font-weight: bold; font-size: 13px;")
+        layout.addWidget(lbl_algo)
 
-        # --- YENİ EKLENEN VE DÜZENLENEN BUTONLAR ---
-        menu_items = [
-            ("➕ Üniversite Ekle", self.open_add_dialog, "#4CAF50"),
-            ("🔗 Bağlantı Ekle", self.open_add_edge_dialog, "#607D8B"),
-            ("✂️ Bağlantı Sil", self.open_delete_edge_dialog, "#FF5722"),  # YENİ
-            ("🏆 En Etkili 5 Üni", self.show_top_5, "#FFC107"),  # YENİ
-            ("📍 Dijkstra (En Kısa Yol)", lambda: self.open_path_dialog("Dijkstra"), "#E91E63"),
-            ("⭐ A* (En Kısa Yol)", lambda: self.open_path_dialog("A*"), "#9C27B0"),  # YENİ
-            ("🎨 Renklendir (W.Powell)", self.run_coloring, "#673AB7"),
-            ("🧩 Toplulukları Bul", self.show_communities, "#00BCD4")
+        algo_items = [
+            ("Renklendir (W.Powell)", self.run_coloring),
+            ("A* (En Kısa Yol)", lambda: self.open_path_dialog("A*")),
+            ("Dijkstra (En Kısa Yol)", lambda: self.open_path_dialog("Dijkstra")),
+            ("Toplulukları Bul", self.show_communities),
+            ("En Etkili 5 Üniversite", self.show_top_5)
         ]
-
-        for text, func, color in menu_items:
-            btn = self.create_menu_button(text, color)
+        for text, func in algo_items:
+            btn = self.create_menu_button(text, "#3e96f8")
             btn.clicked.connect(func)
             layout.addWidget(btn)
 
-        layout.addSpacing(20)
-
+        # --- 2. GRUP: CANLI SİMÜLASYON ---
+        # Görseldeki "Canlı Simülasyon" kutu görünümünü koruyoruz
         sim_card = CardWidget("Canlı Simülasyon")
         sim_layout = QVBoxLayout()
 
-        btn_bfs = ModernButton("🌊 BFS Başlat")
+        btn_bfs = ModernButton("BFS Başlat")
         btn_bfs.clicked.connect(lambda: self.run_algo("BFS"))
-
-        btn_dfs = ModernButton("⬇️ DFS Başlat")
+        btn_dfs = ModernButton("DFS Başlat")
         btn_dfs.clicked.connect(lambda: self.run_algo("DFS"))
 
         sim_layout.addWidget(btn_bfs)
         sim_layout.addWidget(btn_dfs)
         sim_card.content_layout.addLayout(sim_layout)
-
         layout.addWidget(sim_card)
+
+        # --- 3. GRUP: NODE & EDGE İŞLEMLERİ ---
+        lbl_ops = QLabel("NODE & EDGE İŞLEMLERİ")
+        lbl_ops.setAlignment(Qt.AlignCenter)
+        lbl_ops.setFixedHeight(45)
+        lbl_ops.setStyleSheet("background-color: #3e96f8; color: white; font-weight: bold; font-size: 13px;")
+        layout.addWidget(lbl_ops)
+
+        ops_items = [
+            ("🏛️ Üniversite Ekle", self.open_add_dialog),
+            ("Üniversite Sil", self.open_delete_node_dialog),
+            ("🔗 Bağlantı Ekle", self.open_add_edge_dialog),
+            ("Bağlantı Sil", self.open_delete_edge_dialog)
+        ]
+        for text, func in ops_items:
+            btn = self.create_menu_button(text, "#f44336")  # Silme işlemleri için kırmızı vurgu
+            btn.clicked.connect(func)
+            layout.addWidget(btn)
+
         layout.addStretch()
 
-        lbl_footer = QLabel(f"Düğümler: {len(self.graph.nodes)}")
+        # Alt bilgi
+        lbl_footer = QLabel(f"Toplam Düğüm: {len(self.graph.nodes)}")
         lbl_footer.setAlignment(Qt.AlignCenter)
-        lbl_footer.setStyleSheet("padding: 10px; color: #aaa;")
+        lbl_footer.setStyleSheet("padding: 10px; color: #888; border-top: 1px solid #eee;")
         layout.addWidget(lbl_footer)
 
         self.sidebar.setWidget(content)
@@ -316,10 +338,12 @@ class MainWindow(QMainWindow):
         self.detail_panel.setFeatures(QDockWidget.DockWidgetMovable)
         self.detail_panel.setMinimumWidth(320)
 
+
         content = QWidget()
         layout = QVBoxLayout(content)
 
         self.uni_card = CardWidget("Üniversite Bilgileri")
+        self.uni_card_title = self.uni_card.title_label
 
         self.lbl_uni_icon = QLabel("🏛️")
         self.lbl_uni_icon.setAlignment(Qt.AlignCenter)
@@ -327,6 +351,7 @@ class MainWindow(QMainWindow):
         self.uni_card.content_layout.addWidget(self.lbl_uni_icon)
 
         self.detail_labels = {}
+        self.detail_titles = {}
         fields = [
             ("name", "Üniversite:", "Seçim Yok"),
             ("city", "Konum:", "-"),
@@ -337,28 +362,33 @@ class MainWindow(QMainWindow):
 
         for key, title, default in fields:
             row = QHBoxLayout()
+
             lbl_t = QLabel(title)
             lbl_t.setStyleSheet("color: #777; font-weight: bold;")
+
             lbl_v = QLabel(default)
             lbl_v.setStyleSheet("color: #333;")
             lbl_v.setWordWrap(True)
 
             row.addWidget(lbl_t)
             row.addWidget(lbl_v)
+
             self.uni_card.content_layout.addLayout(row)
-            self.detail_labels[key] = lbl_v
+
+            self.detail_titles[key] = lbl_t  # 👈 başlık
+            self.detail_labels[key] = lbl_v  # 👈 değer
 
         layout.addWidget(self.uni_card)
 
         action_card = CardWidget("İşlemler")
         act_layout = QVBoxLayout()
 
-        self.btn_edit = QPushButton("✏️ Bilgileri Düzenle")
+        self.btn_edit = QPushButton("Bilgileri Düzenle")
         self.btn_edit.setStyleSheet("background-color: #FFC107; padding: 8px; border-radius: 4px;")
         self.btn_edit.clicked.connect(self.edit_selected_node)
         self.btn_edit.setEnabled(False)
 
-        self.btn_delete = QPushButton("🗑️ Üniversiteyi Sil")
+        self.btn_delete = QPushButton("Üniversiteyi Sil")
         self.btn_delete.setStyleSheet("background-color: #F44336; color: white; padding: 8px; border-radius: 4px;")
         self.btn_delete.clicked.connect(self.delete_selected_node)
         self.btn_delete.setEnabled(False)
@@ -394,16 +424,48 @@ class MainWindow(QMainWindow):
     # İŞLEV FONKSİYONLARI (ZAMAN ÖLÇÜMLÜ)
     # ==========================================================
 
+    # main_window.py içindeki metod güncellemesi
+
     def show_node_details(self, node):
         self.selected_node = node
+        self.selected_edge = None
+
+        # Başlık & ikon düzenleme
+        self.lbl_uni_icon.setText("🏛️")
+        self.uni_card.setTitle("Üniversite Bilgileri")
+
+        # Alanları görünür yap ve etiketleri düzelt
+        for key in self.detail_titles:
+            self.detail_titles[key].show()
+            self.detail_labels[key].show()
+        self.detail_titles["name"].setText("Üniversite:")
+        self.detail_titles["rank"].setText("Sıralama:")
+
+        # Verileri doldur
         self.detail_labels["name"].setText(node.adi)
         self.detail_labels["city"].setText(f"{node.sehir} / {node.ilce}")
         self.detail_labels["year"].setText(str(node.kurulus_yil))
         self.detail_labels["students"].setText(f"{node.ogrenci_sayisi:,}")
         self.detail_labels["rank"].setText(f"#{node.tr_siralama}")
+
+        # --- BUTON YÖNLENDİRMELERİ ---
+        self.btn_edit.setVisible(True)
         self.btn_edit.setEnabled(True)
         self.btn_delete.setEnabled(True)
-        self.status_label.setText(f"Seçildi: {node.adi}")
+        self.btn_delete.setText("Üniversiteyi Sil")
+
+        # Önce eski bağlantıları kopar, sonra ilgili fonksiyonlara bağla
+        try:
+            self.btn_edit.clicked.disconnect()
+        except:
+            pass
+        self.btn_edit.clicked.connect(self.edit_selected_node)  # Düzenle -> edit_selected_node
+
+        try:
+            self.btn_delete.clicked.disconnect()
+        except:
+            pass
+        self.btn_delete.clicked.connect(self.delete_selected_node)  # Sil -> delete_selected_node
 
     def open_add_dialog(self):
         try:
@@ -444,20 +506,25 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Hata", str(e))
 
     def open_delete_edge_dialog(self):
-        """Bağlantı Silme Penceresi (YENİ)"""
+        """Bağlantı Silme Penceresi (Hata kontrollü ve Onay mekanizmalı)"""
         try:
             if not self.graph.edges:
                 QMessageBox.warning(self, "Veri Yok", "Silinecek bağlantı yok.")
                 return
 
-            # AddEdgeDialog'u tekrar kullanıyoruz ama başlığını değiştiriyoruz
+            # AddEdgeDialog'u kullanıyoruz
             dialog = AddEdgeDialog(self.graph.nodes, self)
             dialog.setWindowTitle("Bağlantı Sil")
 
             if dialog.exec_():
                 u1_id, u2_id = dialog.get_data()
 
-                # Bağlantıyı bul
+                # --- KONTROL 1: Aynı üniversite seçimi ---
+                if u1_id == u2_id:
+                    QMessageBox.warning(self, "Hata", "Aynı üniversiteyi seçtiniz. Lütfen farklı iki üniversite seçin.")
+                    return
+
+                # Bağlantıyı bulmaya çalış
                 edge_to_remove = None
                 for edge in self.graph.edges:
                     ids = [edge.node1.uni_id, edge.node2.uni_id]
@@ -466,23 +533,30 @@ class MainWindow(QMainWindow):
                         break
 
                 if edge_to_remove:
-                    # Graf'tan sil
-                    self.graph.edges.remove(edge_to_remove)
-                    if u1_id in self.graph.adj:
-                        self.graph.adj[u1_id].discard(u2_id)
-                    if u2_id in self.graph.adj:
-                        self.graph.adj[u2_id].discard(u1_id)
+                    # --- KONTROL 2: Silme Onayı ---
+                    confirm_msg = f"{edge_to_remove.node1.adi} ve {edge_to_remove.node2.adi} arasındaki bağlantı silinecek. Onaylıyor musunuz?"
+                    reply = QMessageBox.question(self, 'Onay', confirm_msg, QMessageBox.Yes | QMessageBox.No,
+                                                 QMessageBox.No)
 
-                    # Veritabanından sil (Eğer loader destekliyorsa)
-                    if hasattr(self.loader, 'delete_relation'):
-                        self.loader.delete_relation(u1_id, u2_id)
+                    if reply == QMessageBox.Yes:
+                        # Graf'tan sil
+                        self.graph.edges.remove(edge_to_remove)
+                        if u1_id in self.graph.adj:
+                            self.graph.adj[u1_id].discard(u2_id)
+                        if u2_id in self.graph.adj:
+                            self.graph.adj[u2_id].discard(u1_id)
 
-                    self.canvas.update()
-                    QMessageBox.information(self, "Başarılı", "Bağlantı silindi.")
+                        # Veritabanından sil
+                        if hasattr(self.loader, 'delete_relation'):
+                            self.loader.delete_relation(u1_id, u2_id)
+
+                        self.canvas.update()
+                        QMessageBox.information(self, "Başarılı", "Bağlantı başarıyla silindi.")
                 else:
-                    QMessageBox.warning(self, "Hata", "Seçilen iki üniversite arasında bağlantı bulunamadı.")
+                    QMessageBox.warning(self, "Hata", "Seçilen üniversiteler arasında aktif bir bağlantı bulunamadı.")
+
         except Exception as e:
-            QMessageBox.critical(self, "Hata", f"Silme hatası: {e}")
+            QMessageBox.critical(self, "Hata", f"Silme hatası oluştu: {e}")
 
     def save_university(self, info, partners):
         try:
@@ -582,7 +656,7 @@ class MainWindow(QMainWindow):
                     self.canvas.set_path([])
                 else:
                     self.canvas.set_path(path)
-                    msg = f"✅ Yol Başarıyla Bulundu!\n\n📍 Algoritma: {algo}\n⏱️ Süre: {elapsed:.6f} sn\n💰 Maliyet: {cost:.2f}"
+                    msg = f"✅ Yol Başarıyla Bulundu!\n\n Algoritma: {algo}\n Süre: {elapsed:.6f} sn\n Maliyet: {cost:.2f}"
                     QMessageBox.information(self, "Rota Sonucu", msg)
 
         except Exception as e:
@@ -605,34 +679,52 @@ class MainWindow(QMainWindow):
             self.coloring_result = new_coloring
 
             QMessageBox.information(self, "Renklendirme Bitti",
-                                    f"Graf renklendirme işlemi tamamlandı.\n\n⏱️ Geçen Süre: {elapsed:.6f} saniye")
+                                    f"Graf renklendirme işlemi tamamlandı.\n\n Geçen Süre: {elapsed:.6f} saniye")
 
             dialog = ColoringDialog(self.graph, self.coloring_result, self)
             dialog.exec_()
         except Exception as e:
             QMessageBox.critical(self, "Hata", f"Renklendirme hatası: {e}")
 
+    # ui/main_window.py içindeki show_communities metodunu bununla değiştir:
+
     def show_communities(self):
-        """Topluluk Analizi (Süre Kutucuklu)"""
+        """Topluluk Analizi Sonucu ve Doğrudan CSV Aktar Butonu"""
         if not hasattr(self.graph, 'find_connected_components'):
-            QMessageBox.warning(self, "Eksik", "Graph sınıfında 'find_connected_components' metodu yok.")
+            QMessageBox.warning(self, "Eksik", "Graph sınıfında analiz metodu yok.")
             return
 
+        import time
         start_time = time.perf_counter()
         comps = self.graph.find_connected_components()
         elapsed = time.perf_counter() - start_time
 
-        # MESAJ KUTUSU İÇERİĞİ
-        msg = f"⏱️ Analiz Süresi: {elapsed:.6f} saniye\n"
+        # Mesaj içeriği hazırlama (mevcut kodunuzla aynı)
+        msg = f" Analiz Süresi: {elapsed:.6f} saniye\n"
         msg += f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         msg += f"Toplam {len(comps)} adet ayrık topluluk bulundu.\n\n"
 
         for i, comp in enumerate(comps, 1):
-            names = ", ".join([n.adi[:20] + "..." if len(n.adi) > 20 else n.adi for n in comp[:5]])
-            if len(comp) > 5: names += f" ve {len(comp) - 5} diğer..."
+            names = ", ".join([n.adi[:20] + "..." if len(n.adi) > 20 else n.adi for n in comp[:3]])
+            if len(comp) > 3: names += f" ve {len(comp) - 3} diğer..."
             msg += f"🔹 Grup {i} ({len(comp)} Üni): {names}\n"
 
-        QMessageBox.information(self, "Topluluk Analizi Sonucu", msg)
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle("Topluluk Analizi Sonucu")
+        msg_box.setText(msg)
+        export_button = msg_box.addButton("CSV Olarak Dışarı Aktar", QMessageBox.ActionRole)
+        close_button = msg_box.addButton("Kapat", QMessageBox.RejectRole)
+        msg_box.exec_()
+
+        if msg_box.clickedButton() == export_button:
+            try:
+                from core.exporter import Exporter
+                exporter = Exporter()
+                # DİKKAT: Artık ilk parametre olarak self.graph gönderiyoruz
+                path = exporter.export_communities_to_csv(self.graph, comps)
+                QMessageBox.information(self, "Başarılı", f"Rapor tablo formatında dışa aktarıldı:\n{path}")
+            except Exception as e:
+                QMessageBox.critical(self, "Hata", f"Dışa aktarma başarısız: {e}")
 
     def show_top_5(self):
         """En Etkili 5 Üniversite Gösterimi (YENİ)"""
@@ -646,8 +738,8 @@ class MainWindow(QMainWindow):
 
         # Dialog oluştur
         dialog = QDialog(self)
-        dialog.setWindowTitle("🏆 En Etkili 5 Üniversite (Merkezilik)")
-        dialog.resize(700, 300)
+        dialog.setWindowTitle("En Etkili 5 Üniversite (Merkezilik)")
+        dialog.resize(800, 500)
         layout = QVBoxLayout(dialog)
 
         lbl_time = QLabel(f"Hesaplama Süresi: {elapsed:.6f} sn")
@@ -669,7 +761,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(table)
 
         # Dışa aktar butonu
-        btn_export = QPushButton("📤 Bu Raporu İndir (CSV)")
+        btn_export = QPushButton("Bu Raporu İndir (CSV)")
         btn_export.clicked.connect(lambda: [self.export_centrality_report(), dialog.accept()])
         layout.addWidget(btn_export)
 
@@ -743,4 +835,110 @@ class MainWindow(QMainWindow):
 
         # 4. Canvas'ı yenile
         self.canvas.update()
+
+    # main_window.py içine eklenecek metodlar
+
+    # main_window.py içindeki metod güncellemesi
+
+    def show_edge_details(self, edge):
+        self.selected_node = None
+        self.selected_edge = edge
+
+        # Başlık & ikon düzenleme
+        self.lbl_uni_icon.setText("🔗")
+        self.uni_card.setTitle("Bağlantı Bilgileri")
+
+        # Kullanılmayan alanları gizle
+        for key in ["city", "year", "students"]:
+            self.detail_titles[key].hide()
+            self.detail_labels[key].hide()
+
+        self.detail_titles["name"].setText("Bağlantı:")
+        self.detail_titles["rank"].setText("Ağırlık:")
+
+        # Değerler
+        self.detail_labels["name"].setText(f"{edge.node1.adi} ↔\n{edge.node2.adi}")
+        self.detail_labels["rank"].setText(f"{edge.weight:.4f}")
+
+        # --- BUTON YÖNLENDİRMELERİ ---
+        self.btn_edit.setVisible(False)  # Bağlantıda düzenle butonu gözükmesin
+        self.btn_delete.setEnabled(True)
+        self.btn_delete.setText("Bağlantıyı Sil")
+
+        # Sil butonunu delete_selected_edge fonksiyonuna bağla
+        try:
+            self.btn_delete.clicked.disconnect()
+        except:
+            pass
+        self.btn_delete.clicked.connect(self.delete_selected_edge)  # Sil -> delete_selected_edge
+
+    def find_label_by_text(self, text):
+        """Yardımcı fonksiyon: Paneldeki statik etiketleri bulur."""
+        # self.uni_card içindeki tüm QLabel'ları tara
+        for label in self.uni_card.findChildren(QLabel):
+            if label.text() in ["Üniversite:", "Bağlantı:", "Sıralama:", "Ağırlık:"]:
+                if text in [label.text()]:
+                    return label
+        return QLabel()  # Güvenlik için boş etiket dön
+
+    def delete_selected_edge(self):
+        """Seçili kenarı siler."""
+        if not self.selected_edge: return
+
+        u1_id = self.selected_edge.node1.uni_id
+        u2_id = self.selected_edge.node2.uni_id
+
+        reply = QMessageBox.question(self, 'Bağlantı Sil', "Bu bağlantıyı silmek istediğinize emin misiniz?",
+                                     QMessageBox.Yes | QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            # Veritabanından sil
+            self.loader.delete_relation(u1_id, u2_id)
+            # Graf yapısından sil
+            self.graph.remove_edge(u1_id, u2_id)
+            # Seçimi temizle
+            self.selected_edge = None
+            self.reset_visuals()
+            QMessageBox.information(self, "Başarılı", "Bağlantı silindi.")
+
+    def open_delete_node_dialog(self):
+        """Sadece dropdown üzerinden üniversite seçerek silme işlemi yapar."""
+        try:
+            # Üniversite isimlerini al
+            uni_names = [uni[1] for uni in self.loader.get_university_names()]
+            uni_data = self.loader.get_university_names()  # [(id, isim), ...]
+
+            if not uni_names:
+                QMessageBox.warning(self, "Hata", "Silinecek üniversite bulunamadı.")
+                return
+
+            # Kullanıcıya dropdown listesi sun
+            item, ok = QInputDialog.getItem(self, "Üniversite Sil",
+                                            "Silmek istediğiniz üniversiteyi seçin:",
+                                            uni_names, 0, False)
+
+            if ok and item:
+                # Seçilen isme göre ID'yi bul
+                selected_id = next(u[0] for u in uni_data if u[1] == item)
+
+                confirm = QMessageBox.question(self, "Onay",
+                                               f"'{item}' üniversitesini ve tüm bağlantılarını silmek istediğinize emin misiniz?",
+                                               QMessageBox.Yes | QMessageBox.No)
+
+                if confirm == QMessageBox.Yes:
+                    # 1. Veritabanından sil
+                    self.loader.delete_university(selected_id)
+                    # 2. Graf yapısından sil
+                    self.graph.remove_node(selected_id)
+
+                    # Eğer silinen düğüm o an sağ panelde seçiliyse temizle
+                    if self.selected_node and self.selected_node.uni_id == selected_id:
+                        self.selected_node = None
+                        self.reset_visuals()
+
+                    self.canvas.update()
+                    QMessageBox.information(self, "Başarılı", f"'{item}' başarıyla silindi.")
+        except Exception as e:
+            QMessageBox.critical(self, "Hata", f"Silme işlemi başarısız oldu: {str(e)}")
+
 

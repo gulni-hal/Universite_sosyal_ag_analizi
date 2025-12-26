@@ -90,3 +90,41 @@ class Exporter:
             return output_path
         except Exception as e:
             raise Exception(f"Merkezilik CSV dışa aktarma hatası: {e}")
+
+    # core/exporter.py içindeki Exporter sınıfına ekle
+
+    # core/exporter.py içindeki export_communities_to_csv metodunu bununla değiştirin:
+
+    def export_communities_to_csv(self, graph, components, filename="topluluk_analizi.csv"):
+        """
+        Topluluk analizi sonuçlarını (ayrık grupları) CSV olarak dışa aktarır.
+        İlçe yerine komşu listesini ekler.
+        """
+        import os, csv
+        output_path = os.path.join(self.output_dir, filename)
+
+        try:
+            with open(output_path, 'w', newline='', encoding='utf-8-sig') as csvfile:
+
+                fieldnames = ['Topluluk No', 'Üniversite ID', 'Üniversite Adı', 'Şehir', 'Komşular']
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+                writer.writeheader()
+                for i, component in enumerate(components, 1):
+                    for node in component:
+                        # Graph üzerinden komşuların isimlerini alalım
+                        neighbor_ids = graph.get_neighbors(node.uni_id)
+                        neighbor_names = [graph.nodes[nid].adi for nid in neighbor_ids if nid in graph.nodes]
+                        neighbors_str = ", ".join(sorted(neighbor_names))
+
+                        writer.writerow({
+                            'Topluluk No': i,
+                            'Üniversite ID': node.uni_id,
+                            'Üniversite Adı': node.adi,
+                            'Şehir': node.sehir,
+                            'Komşular': neighbors_str
+                        })
+            return output_path
+        except Exception as e:
+            raise Exception(f"Topluluk CSV dışa aktarma hatası: {e}")
+

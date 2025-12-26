@@ -27,7 +27,7 @@ class ColoringDialog(QDialog):
         super().__init__(parent)
         self.graph = graph
         self.coloring = coloring
-        self.setWindowTitle("🎨 Welsh-Powell Renklendirme Sonuçları")
+        self.setWindowTitle("Welsh-Powell Renklendirme Sonuçları")
         self.setMinimumSize(800, 500)
         self.exporter = Exporter()
 
@@ -48,7 +48,7 @@ class ColoringDialog(QDialog):
         main_layout.addWidget(self.table_widget)
 
         # Dışa Aktar Butonu
-        btn_export = QPushButton("💾 CSV Olarak Dışa Aktar")
+        btn_export = QPushButton("CSV Olarak Dışa Aktar")
         btn_export.clicked.connect(self._export_to_csv)
         main_layout.addWidget(btn_export)
 

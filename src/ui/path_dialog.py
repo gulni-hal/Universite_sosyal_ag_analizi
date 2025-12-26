@@ -24,7 +24,7 @@ class PathDialog(QDialog):
         layout.addWidget(self.combo_end)
 
         # Hesapla Butonu
-        btn_calc = QPushButton("🚀 Yolu Hesapla")
+        btn_calc = QPushButton("Yolu Hesapla")
         btn_calc.setStyleSheet("background-color: #2196F3; color: white; font-weight: bold; padding: 8px;")
         btn_calc.clicked.connect(self.accept)
         layout.addWidget(btn_calc)
