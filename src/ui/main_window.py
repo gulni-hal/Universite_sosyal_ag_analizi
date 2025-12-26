@@ -4,6 +4,8 @@ import sys
 import os
 import time  # Süre ölçümü için
 
+from core.algorithms import AStarAlgorithm
+
 # Import yollarını garantiye al
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -16,6 +18,7 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QVBoxLayout,
 from PyQt5.QtCore import Qt, QSize, QTimer, QPropertyAnimation, QEasingCurve, pyqtProperty
 from PyQt5.QtGui import QIcon, QFont, QPalette, QColor, QFontDatabase, QLinearGradient, QPainter
 
+
 # Modüller
 from .graph_canvas import GraphCanvas
 from .add_node_dialog import AddNodeDialog
@@ -23,6 +26,8 @@ from .coloring_dialog import ColoringDialog
 from .path_dialog import PathDialog
 from .add_edge_dialog import AddEdgeDialog
 from core.node import Node
+from core.algorithms import DijkstraAlgorithm, BFSAlgorithm
+from core.algorithms import DFSAlgorithm# Yeni sınıfları import edin
 
 
 class ModernButton(QPushButton):
@@ -644,10 +649,16 @@ class MainWindow(QMainWindow):
 
                 start_time = time.perf_counter()
 
-                if algo == "A*" and hasattr(self.graph, 'a_star'):
-                    cost, path = self.graph.a_star(start_id, end_id)
+                # --- SOYUTLAMA KULLANIMI ---
+                if algo == "Dijkstra":
+                    strategy = DijkstraAlgorithm()
                 else:
-                    cost, path = self.graph.dijkstra(start_id, end_id)
+                    strategy = AStarAlgorithm()
+
+                # Graph içindeki soyut metodu çağırıyoruz
+                # Artık self.graph.dijkstra() yerine soyut yapıyı kullanıyoruz
+                cost, path = self.graph.run_algorithm(strategy, start_id, end_id)
+                # ---------------------------
 
                 elapsed = time.perf_counter() - start_time
 
@@ -794,10 +805,15 @@ class MainWindow(QMainWindow):
         start_id = self.selected_node.uni_id
         start_time = time.perf_counter()
 
+        # --- SOYUTLAMA KULLANIMI ---
         if algo_type == "BFS":
-            self.animation_sequence = self.graph.bfs(start_id)
+            strategy = BFSAlgorithm()
         else:
-            self.animation_sequence = self.graph.dfs(start_id)
+            strategy = DFSAlgorithm()
+
+        # Algoritmayı soyut nesne üzerinden çalıştırıyoruz
+        self.animation_sequence = self.graph.run_algorithm(strategy, start_id)
+        # ---------------------------
 
         elapsed = time.perf_counter() - start_time
 
@@ -882,24 +898,50 @@ class MainWindow(QMainWindow):
         return QLabel()  # Güvenlik için boş etiket dön
 
     def delete_selected_edge(self):
-        """Seçili kenarı siler."""
-        if not self.selected_edge: return
+        """Seçili kenarı güvenli bir şekilde siler ve UI'yı temizler."""
+        if not self.selected_edge:
+            return
 
         u1_id = self.selected_edge.node1.uni_id
         u2_id = self.selected_edge.node2.uni_id
 
-        reply = QMessageBox.question(self, 'Bağlantı Sil', "Bu bağlantıyı silmek istediğinize emin misiniz?",
+        reply = QMessageBox.question(self, 'Bağlantı Sil',
+                                     f"{self.selected_edge.node1.adi} - {self.selected_edge.node2.adi} arasındaki bağlantıyı silmek istediğinize emin misiniz?",
                                      QMessageBox.Yes | QMessageBox.No)
 
         if reply == QMessageBox.Yes:
-            # Veritabanından sil
-            self.loader.delete_relation(u1_id, u2_id)
-            # Graf yapısından sil
-            self.graph.remove_edge(u1_id, u2_id)
-            # Seçimi temizle
-            self.selected_edge = None
-            self.reset_visuals()
-            QMessageBox.information(self, "Başarılı", "Bağlantı silindi.")
+            try:
+                # 1. Veritabanından sil
+                if hasattr(self.loader, 'delete_relation'):
+                    self.loader.delete_relation(u1_id, u2_id)
+
+                # 2. Graf yapısından (Listeden) sil
+                if self.selected_edge in self.graph.edges:
+                    self.graph.edges.remove(self.selected_edge)
+
+                # 3. Adjacency (Komşuluk) listesinden sil (Bu adım çok kritik!)
+                if u1_id in self.graph.adj:
+                    self.graph.adj[u1_id].discard(u2_id)
+                if u2_id in self.graph.adj:
+                    self.graph.adj[u2_id].discard(u1_id)
+
+                # 4. Seçimi ve UI Panelini temizle
+                self.selected_edge = None
+                self.reset_visuals()  # Görsel efektleri temizler
+
+                # Detay panelini sıfırla (Çökmeyi önlemek için)
+                for key in self.detail_labels:
+                    self.detail_labels[key].setText("-")
+                self.detail_titles["name"].setText("Bağlantı:")
+                self.detail_labels["name"].setText("Silindi")
+                self.btn_delete.setEnabled(False)
+
+                # 5. Ekranı güncelle
+                self.canvas.update()
+                QMessageBox.information(self, "Başarılı", "Bağlantı başarıyla silindi.")
+
+            except Exception as e:
+                QMessageBox.critical(self, "Hata", f"Silme işlemi sırasında hata oluştu: {str(e)}")
 
     def open_delete_node_dialog(self):
         """Sadece dropdown üzerinden üniversite seçerek silme işlemi yapar."""
