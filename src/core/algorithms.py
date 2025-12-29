@@ -120,3 +120,15 @@ class DFSAlgorithm(GraphAlgorithm):
                     if neighbor not in visited:
                         stack.append(neighbor)
         return order
+
+class ColoringStrategy(ABC):
+    """Renklendirme algoritmaları için özel arayüz (Interface)"""
+    @abstractmethod
+    def execute(self, graph):
+        pass
+
+class WelshPowellAlgorithm(ColoringStrategy):
+    """Somut Welsh-Powell Stratejisi"""
+    def execute(self, graph):
+        # Graph sınıfındaki mantığı çağırır
+        return graph.welsh_powell_coloring()

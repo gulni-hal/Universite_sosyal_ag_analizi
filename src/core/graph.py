@@ -187,6 +187,12 @@ class Graph:
             coloring[node_id] = color
         return coloring
 
+    def run_coloring_algorithm(self, strategy):
+        """
+        Renklendirme stratejisini çalıştıran köprü metot.
+        """
+        return strategy.execute(self)
+
     def find_connected_components(self):
         visited = set()
         components = []

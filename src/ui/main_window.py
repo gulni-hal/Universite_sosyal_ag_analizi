@@ -2,32 +2,40 @@
 
 import sys
 import os
-import time  # Süre ölçümü için
+import time
 
-from core.algorithms import AStarAlgorithm
-
-# Import yollarını garantiye al
+# Proje ana dizinini yola ekle (Modüllerin bulunması için kritik)
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QVBoxLayout,
                              QHBoxLayout, QFrame, QPushButton, QMessageBox,
                              QAction, QToolBar, QDockWidget, QTabWidget,
                              QTextEdit, QFormLayout, QStyle, QApplication,
-                             QStackedWidget, QGraphicsDropShadowEffect,QInputDialog, QComboBox,
-                             QSizePolicy, QSpacerItem, QGroupBox, QTableWidget, QTableWidgetItem, QHeaderView, QDialog)
+                             QStackedWidget, QGraphicsDropShadowEffect, QInputDialog,
+                             QComboBox, QSizePolicy, QSpacerItem, QGroupBox,
+                             QTableWidget, QTableWidgetItem, QHeaderView, QDialog)
 from PyQt5.QtCore import Qt, QSize, QTimer, QPropertyAnimation, QEasingCurve, pyqtProperty
 from PyQt5.QtGui import QIcon, QFont, QPalette, QColor, QFontDatabase, QLinearGradient, QPainter
 
+# --- EKSİK OLAN IMPORTLAR BURADA ---
+# Bu satırları eklediğinde kırmızı çizgiler kaybolacak:
+from core.node import Node
+from core.graph import Graph
+from core.algorithms import (
+    DijkstraAlgorithm,
+    BFSAlgorithm,
+    DFSAlgorithm,
+    AStarAlgorithm,
+    WelshPowellAlgorithm
+)
 
-# Modüller
+# Diğer UI modülleri
 from .graph_canvas import GraphCanvas
 from .add_node_dialog import AddNodeDialog
 from .coloring_dialog import ColoringDialog
 from .path_dialog import PathDialog
 from .add_edge_dialog import AddEdgeDialog
-from core.node import Node
-from core.algorithms import DijkstraAlgorithm, BFSAlgorithm
-from core.algorithms import DFSAlgorithm# Yeni sınıfları import edin
+
 
 
 class ModernButton(QPushButton):
@@ -674,7 +682,7 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Hata", str(e))
 
     def run_coloring(self):
-        """Welsh-Powell Renklendirme"""
+        """Welsh-Powell Renklendirme (Abstract/Strategy Yapısıyla)"""
         if not self.graph.nodes: return
 
         # --- ÖNCE TEMİZLE ---
@@ -683,21 +691,24 @@ class MainWindow(QMainWindow):
 
         try:
             start_time = time.perf_counter()
-            new_coloring = self.graph.welsh_powell_coloring()
+
+            # --- DEĞİŞİKLİK BURADA: Strategy Pattern Kullanımı ---
+            strategy = WelshPowellAlgorithm()  # Strateji nesnesini oluştur
+            new_coloring = self.graph.run_coloring_algorithm(strategy)  # Graph üzerinden çalıştır
+            # ----------------------------------------------------
+
             elapsed = time.perf_counter() - start_time
 
             self.canvas.update_coloring(new_coloring)
             self.coloring_result = new_coloring
 
             QMessageBox.information(self, "Renklendirme Bitti",
-                                    f"Graf renklendirme işlemi tamamlandı.\n\n Geçen Süre: {elapsed:.6f} saniye")
+                                    f"Graf renklendirme işlemi tamamlandı.\n\n⏱️ Geçen Süre: {elapsed:.6f} saniye")
 
             dialog = ColoringDialog(self.graph, self.coloring_result, self)
             dialog.exec_()
         except Exception as e:
             QMessageBox.critical(self, "Hata", f"Renklendirme hatası: {e}")
-
-    # ui/main_window.py içindeki show_communities metodunu bununla değiştir:
 
     def show_communities(self):
         """Topluluk Analizi Sonucu ve Doğrudan CSV Aktar Butonu"""
