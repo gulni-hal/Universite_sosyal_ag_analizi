@@ -109,32 +109,20 @@ class DataLoader:
 
         # 3. Pozisyonlama (Layout) - Sadece düğüm varsa çalıştır
         try:
-            # Layout hesaplama, büyük grafikler için zaman alabilir, ancak 50-1000 düğümde hızlıdır.
-            num_nodes = len(G_nx.nodes)
-            dynamic_k = 2.0 / (num_nodes ** 0.5) if num_nodes > 0 else 0.8
+            # ESKİ HALİ: k=0.45, scale=500 idi.
+            # YENİ HALİ: k=0.85 (Birbirlerini biraz daha itsinler)
+            #            scale=1200 (Alan biraz genişlesin ki çizgiler uzasın)
+            pos = nx.spring_layout(G_nx, seed=42, k=0.85, iterations=50, scale=650)
 
-            # iterations 100-150 arası idealdir
-            pos = nx.spring_layout(G_nx, seed=42, k=dynamic_k, iterations=120)
+            # Merkezi de ekranın ortasına denk gelecek şekilde güncelleyelim
+            center_x, center_y = 1000, 700
 
-            # BURASI ÖNEMLİ: scale değerini 2000'den 1000'e çekerek alanı daraltıyoruz
-            scale = 1000
-            center_x = 1000
-            center_y = 1000
-
-            for uni_id, p in pos.items():
-                if uni_id in graph.nodes:
-                    graph.nodes[uni_id].x = int(center_x + p[0] * scale)
-                    graph.nodes[uni_id].y = int(center_y + p[1] * scale)
-
-            print(f"DataLoader: {len(graph.nodes)} düğüm yüklendi ve konumlandırıldı.")
-
-        except Exception as e:
-            print(f"HATA: NetworkX Layout oluşturulamadı: {e}")
-            # Eğer layout başarısız olursa, düğümler (0,0) konumunda kalır.
-            # Uygulama yine de çalışır, ancak düğümler üst üste yığılmış olur.
+            for nid, p in pos.items():
+                if nid in graph.nodes:
+                    graph.nodes[nid].x = int(center_x + p[0])
+                    graph.nodes[nid].y = int(center_y + p[1])
+        except:
             pass
-
-        return graph
 
     def get_university_names(self):
         conn = sqlite3.connect(self.db_path)
