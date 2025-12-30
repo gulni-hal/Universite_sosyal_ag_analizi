@@ -1,0 +1,25 @@
+{
+  "universiteler": [
+    {
+      "uni_id": 145,
+      "adi": "Deneme universite",
+      "sehir": "Deneme",
+      "ilce": "dene",
+      "kurulus_yil": 1992,
+      "ogrenci_sayisi": 55500,
+      "fakulte_sayisi": 24,
+      "akademik_sayisi": 2883,
+      "tr_siralama": 195
+    }
+  ],
+  "iliskiler": [
+    {
+      "source_id": 145,
+      "target_id": 128
+    },
+    {
+      "source_id": 145,
+      "target_id": 129
+    }
+  ]
+}

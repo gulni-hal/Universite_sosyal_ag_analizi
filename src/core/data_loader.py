@@ -377,3 +377,99 @@ class DataLoader:
         except Exception as e:
             if 'conn' in locals(): conn.close()
             return False, str(e)
+
+    def import_from_csv(self, file_path):
+        """CSV dosyasındaki verileri ve İLİŞKİLERİ doğrulayarak DB'ye aktarır."""
+        import csv
+        import sqlite3
+
+        try:
+            # utf-8-sig: Türkçe karakterleri düzeltir
+            with open(file_path, 'r', encoding='utf-8-sig') as f:
+                # Ayırıcıyı otomatik algıla
+                sample = f.read(1024)
+                f.seek(0)
+                dialect = csv.Sniffer().sniff(sample)
+
+                reader = csv.DictReader(f, dialect=dialect)
+
+                # Verileri hafızaya alalım (Dosyayı iki kere okumamak için)
+                rows = list(reader)
+
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+
+            required_fields = ['adi', 'sehir', 'ilce', 'tr_siralama']
+            pending_relations = []  # İlişkileri en son eklemek için burada tutacağız
+
+            # --- 1. AŞAMA: Üniversiteleri (Düğümleri) Ekle ---
+            for row in rows:
+                if not all(field in row for field in required_fields):
+                    conn.close()
+                    return False, f"CSV sütunları eksik. Zorunlu: {', '.join(required_fields)}"
+
+                if not all(row.get(field) for field in required_fields):
+                    continue
+
+                try:
+                    ranking = int(row['tr_siralama'])
+
+                    # Sayısal verileri güvenli al
+                    kurulus = int(row.get('kurulus_yil')) if row.get('kurulus_yil') and row.get(
+                        'kurulus_yil').isdigit() else 2000
+                    ogrenci = int(row.get('ogrenci_sayisi')) if row.get('ogrenci_sayisi') and row.get(
+                        'ogrenci_sayisi').isdigit() else 0
+                    akademik = int(row.get('akademik_sayisi')) if row.get('akademik_sayisi') and row.get(
+                        'akademik_sayisi').isdigit() else 0
+                    fakulte = str(row.get('fakulte_sayisi', "0"))
+
+                    # ID varsa al, yoksa None
+                    uni_id = row.get('uni_id')
+                    if uni_id and uni_id.strip() == "": uni_id = None
+
+                    # Üniversiteyi Ekle/Güncelle
+                    cursor.execute("""
+                                   INSERT INTO Üniversiteler
+                                   (uni_id, adi, sehir, ilce, kurulus_yil, ogrenci_sayisi, fakulte_sayisi,
+                                    akademik_sayisi, tr_siralama)
+                                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(uni_id) DO
+                                   UPDATE SET
+                                       adi=excluded.adi, sehir=excluded.sehir, tr_siralama=excluded.tr_siralama
+                                   """,
+                                   (uni_id, row['adi'], row['sehir'], row['ilce'], kurulus, ogrenci, fakulte, akademik,
+                                    ranking))
+
+                    # Eğer ID otomatik verildiyse, son eklenen ID'yi bulmalıyız (ilişkiler için gerekli değil ama iyi pratik)
+                    # Ancak CSV ile ilişki kuracaksanız, CSV içinde ID'leri elle vermeniz EN SAĞLIKLISIDIR.
+
+                    # İlişkileri listeye at (Sonra işleyeceğiz)
+                    # Sütun adı: 'iliskili_idleri' -> Format: "1|5|12" (Dik çizgi ile ayrılmış ID'ler)
+                    if 'iliskili_idleri' in row and row['iliskili_idleri']:
+                        source_id = uni_id if uni_id else cursor.lastrowid
+                        targets = row['iliskili_idleri'].split('|')
+                        for t in targets:
+                            if t.strip().isdigit():
+                                pending_relations.append((source_id, int(t.strip())))
+
+                except ValueError as ve:
+                    conn.close()
+                    return False, f"Veri Hatası: {ve}"
+
+            # --- 2. AŞAMA: İlişkileri (Kenarları) Ekle ---
+            count_edges = 0
+            for u, v in pending_relations:
+                # Kendine ilişki eklemeyi engelle
+                if u != v:
+                    # İki yönlü ekle (Source -> Target ve Target -> Source çakışmasını önlemek için IGNORE)
+                    # ID'leri sıralayıp eklersek çift kaydı önleriz ama Graph yapısı çift yönlü olabilir.
+                    # Basitlik için direkt ekliyoruz:
+                    cursor.execute("INSERT OR IGNORE INTO Iliskiler (source_id, target_id) VALUES (?, ?)", (u, v))
+                    count_edges += 1
+
+            conn.commit()
+            conn.close()
+            return True, f"Başarılı! Üniversiteler güncellendi ve {count_edges} bağlantı kuruldu."
+
+        except Exception as e:
+            if 'conn' in locals(): conn.close()
+            return False, f"CSV Okuma Hatası: {str(e)}"

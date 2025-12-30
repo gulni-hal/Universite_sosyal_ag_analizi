@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QVBoxLayout,
                              QTextEdit, QFormLayout, QStyle, QApplication,
                              QStackedWidget, QGraphicsDropShadowEffect, QInputDialog,
                              QComboBox, QSizePolicy, QSpacerItem, QGroupBox,
-                             QTableWidget, QTableWidgetItem, QHeaderView, QDialog)
+                             QTableWidget, QTableWidgetItem, QHeaderView, QDialog, QScrollArea)
 from PyQt5.QtCore import Qt, QSize, QTimer, QPropertyAnimation, QEasingCurve, pyqtProperty
 from PyQt5.QtGui import QIcon, QFont, QPalette, QColor, QFontDatabase, QLinearGradient, QPainter
 
@@ -257,12 +257,44 @@ class MainWindow(QMainWindow):
         self.sidebar.setFeatures(QDockWidget.DockWidgetMovable)
         self.sidebar.setFixedWidth(300)
 
+        # --- DEĞİŞİKLİK 1: Scroll Area ekle ---
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: white;
+            }
+            QScrollBar:vertical {
+                border: none;
+                background: #f0f0f0;
+                width: 8px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background: #c0c0c0;
+                min-height: 20px;
+                border-radius: 4px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background: #a0a0a0;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                border: none;
+                background: none;
+            }
+        """)
+
+        # Ana içerik widget'ı
         content = QWidget()
         content.setStyleSheet("background-color: white;")
         layout = QVBoxLayout(content)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)  # Elemanlar arası boşluğu kaldır
 
-        # --- 1. GRUP: ALGORİTMALAR ---
+        # --- MEVCUT İÇERİK (Değişmeden kalıyor) ---
         lbl_algo = QLabel("ALGORİTMALAR")
         lbl_algo.setAlignment(Qt.AlignCenter)
         lbl_algo.setFixedHeight(45)
@@ -275,15 +307,14 @@ class MainWindow(QMainWindow):
             ("Dijkstra (En Kısa Yol)", lambda: self.open_path_dialog("Dijkstra")),
             ("Toplulukları Bul", self.show_communities),
             ("En Etkili 5 Üniversite", self.show_top_5),
-            ("Tüm Verileri Dışa Aktar", self.export_full_graph_report)  # <-- Yeni Buton
+            ("Tüm Verileri Dışa Aktar", self.export_full_graph_report)
         ]
         for text, func in algo_items:
             btn = self.create_menu_button(text, "#3e96f8")
             btn.clicked.connect(func)
             layout.addWidget(btn)
 
-        # --- 2. GRUP: CANLI SİMÜLASYON ---
-        # Görseldeki "Canlı Simülasyon" kutu görünümünü koruyoruz
+        # --- Simülasyon kartı ---
         sim_card = CardWidget("Canlı Simülasyon")
         sim_layout = QVBoxLayout()
 
@@ -297,7 +328,7 @@ class MainWindow(QMainWindow):
         sim_card.content_layout.addLayout(sim_layout)
         layout.addWidget(sim_card)
 
-        # --- 3. GRUP: NODE & EDGE İŞLEMLERİ ---
+        # --- NODE & EDGE İŞLEMLERİ ---
         lbl_ops = QLabel("NODE & EDGE İŞLEMLERİ")
         lbl_ops.setAlignment(Qt.AlignCenter)
         lbl_ops.setFixedHeight(45)
@@ -309,22 +340,26 @@ class MainWindow(QMainWindow):
             ("Üniversite Sil", self.open_delete_node_dialog),
             ("🔗 Bağlantı Ekle", self.open_add_edge_dialog),
             ("Bağlantı Sil", self.open_delete_edge_dialog),
-            ("JSON Veri İçe Aktar", self.import_json_data)
+            ("JSON Veri İçe Aktar", self.import_json_data),
+            ("CSV Veri İçe Aktar", self.import_csv_data)
         ]
         for text, func in ops_items:
-            btn = self.create_menu_button(text, "#f44336")  # Silme işlemleri için kırmızı vurgu
+            btn = self.create_menu_button(text, "#f44336")
             btn.clicked.connect(func)
             layout.addWidget(btn)
 
+        # --- DEĞİŞİKLİK 2: Esnek boşluk ekle ---
         layout.addStretch()
 
-        # Alt bilgi
+        # --- Alt bilgi ---
         lbl_footer = QLabel(f"Toplam Düğüm: {len(self.graph.nodes)}")
         lbl_footer.setAlignment(Qt.AlignCenter)
         lbl_footer.setStyleSheet("padding: 10px; color: #888; border-top: 1px solid #eee;")
         layout.addWidget(lbl_footer)
 
-        self.sidebar.setWidget(content)
+        # --- DEĞİŞİKLİK 3: Scroll area'ya içeriği ekle ---
+        scroll_area.setWidget(content)
+        self.sidebar.setWidget(scroll_area)  # content yerine scroll_area set ediyoruz
         self.addDockWidget(Qt.LeftDockWidgetArea, self.sidebar)
 
     def create_menu_button(self, text, color):
@@ -1040,3 +1075,30 @@ class MainWindow(QMainWindow):
                 # Hata mesajını (sıralama çakışması veya eksik veri) burada göster
                 QMessageBox.critical(self, "Veri Hatası", f"İşlem durduruldu:\n{message}")
 
+    def import_csv_data(self):
+        """CSV dosyasından veri yükler."""
+        from PyQt5.QtWidgets import QFileDialog
+
+        # Kullanıcıya CSV dosyası seçtir
+        file_path, _ = QFileDialog.getOpenFileName(self, "CSV Dosyası Seç", "",
+                                                   "CSV Dosyaları (*.csv);;Tüm Dosyalar (*)")
+
+        if file_path:
+            # data_loader'daki fonksiyonu çağır
+            success, message = self.loader.import_from_csv(file_path)
+
+            if success:
+                # Grafiği sıfırla ve yeniden yükle
+                self.graph.nodes = {}
+                self.graph.edges = []
+                self.graph.adj = {}
+                self.loader.load_graph(self.graph)
+
+                # Görünümü yenile
+                self.canvas.fit_view()
+                self.canvas.update()
+
+                QMessageBox.information(self, "Başarılı", message)
+            else:
+                # Hata varsa göster
+                QMessageBox.critical(self, "İçe Aktarma Hatası", f"İşlem durduruldu:\n{message}")
