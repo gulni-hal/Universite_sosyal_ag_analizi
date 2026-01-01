@@ -31,7 +31,7 @@ class PathDialog(QDialog):
     def setup_combo(self, combo):
         combo.setEditable(True)
         combo.setMaxVisibleItems(12) # Kaydırma çubuğu çıkmadan önce görünecek satır sayısı
-        
+
         sorted_unis = sorted(self.university_list, key=lambda x: x[1])
         for uni_id, uni_name in sorted_unis:
             combo.addItem(uni_name, uni_id)

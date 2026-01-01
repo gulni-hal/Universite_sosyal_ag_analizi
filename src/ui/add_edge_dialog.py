@@ -17,7 +17,7 @@ class AddEdgeDialog(QDialog):
             combo.setEditable(True)  # Yazarak arama yapabilmek için
             combo.setInsertPolicy(QComboBox.NoInsert)
 
-            # --- HATA DÜZELTMESİ BURADA ---
+
             completer = combo.completer()
             completer.setCompletionMode(QCompleter.PopupCompletion)
             completer.setFilterMode(Qt.MatchContains)  # Kelime içinden arama yapar
