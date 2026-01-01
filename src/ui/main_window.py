@@ -9,10 +9,12 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QVBoxLayout,
                              QHBoxLayout, QFrame, QPushButton, QMessageBox,
-                              QDockWidget, QApplication,
+                             QDockWidget, QApplication,
                              QGraphicsDropShadowEffect, QInputDialog,
-                             QTableWidget, QTableWidgetItem, QHeaderView, QDialog, QScrollArea)
+                             QTableWidget, QTableWidgetItem, QHeaderView, QDialog, QScrollArea, QDialogButtonBox,
+                             QComboBox,QCompleter)
 from PyQt5.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, pyqtProperty
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QComboBox, QLabel, QDialogButtonBox, QMessageBox, QCompleter
 from PyQt5.QtGui import  QFont, QPalette, QColor, QLinearGradient, QPainter
 
 # --- EKSİK OLAN IMPORTLAR BURADA ---
@@ -988,50 +990,59 @@ class MainWindow(QMainWindow):
 
             except Exception as e:
                 QMessageBox.critical(self, "Hata", f"Silme işlemi sırasında hata oluştu: {str(e)}")
-
     def open_delete_node_dialog(self):
-        """Sadece dropdown üzerinden üniversite seçerek silme işlemi yapar."""
-        try:
-            # Üniversite isimlerini al
-            uni_names = [uni[1] for uni in self.loader.get_university_names()]
-            uni_data = self.loader.get_university_names()  # [(id, isim), ...]
 
-            if not uni_names:
+        try:
+            uni_data = self.loader.get_university_names()
+            if not uni_data:
                 QMessageBox.warning(self, "Hata", "Silinecek üniversite bulunamadı.")
                 return
 
-            # Kullanıcıya dropdown listesi sun
-            item, ok = QInputDialog.getItem(self, "Üniversite Sil",
-                                            "Silmek istediğiniz üniversiteyi seçin:",
-                                            uni_names, 0, False)
+            # scroll icin kisim!!
+            dialog = QDialog(self)
+            dialog.setWindowTitle("Üniversite Sil")
+            dlg_layout = QVBoxLayout(dialog)
 
-            if ok and item:
-                # Seçilen isme göre ID'yi bul
-                selected_id = next(u[0] for u in uni_data if u[1] == item)
+            combo = QComboBox()
+            combo.setEditable(True)
+            combo.setMaxVisibleItems(15)  # 15 öğeden sonra scroll bar çıkar
+
+            sorted_data = sorted(uni_data, key=lambda x: x[1])
+            for u_id, u_name in sorted_data:
+                combo.addItem(u_name, u_id)
+
+            dlg_layout.addWidget(QLabel("Silinecek üniversiteyi seçin:"))
+            dlg_layout.addWidget(combo)
+
+            buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+            buttons.accepted.connect(dialog.accept)
+            buttons.rejected.connect(dialog.reject)
+            dlg_layout.addWidget(buttons)
+
+            if dialog.exec_() == QDialog.Accepted:
+                selected_id = combo.currentData()
+                selected_name = combo.currentText()
 
                 confirm = QMessageBox.question(self, "Onay",
-                                               f"'{item}' üniversitesini ve tüm bağlantılarını silmek istediğinize emin misiniz?",
+                                               f"'{selected_name}' üniversitesini ve tüm bağlantılarını silmek istediğinize emin misiniz?",
                                                QMessageBox.Yes | QMessageBox.No)
 
                 if confirm == QMessageBox.Yes:
-                    # 1. Veritabanından sil
                     self.loader.delete_university(selected_id)
-                    # 2. Graf yapısından sil
                     self.graph.remove_node(selected_id)
 
-                    # Eğer silinen düğüm o an sağ panelde seçiliyse temizle
                     if self.selected_node and self.selected_node.uni_id == selected_id:
                         self.selected_node = None
                         self.reset_visuals()
 
                     self.canvas.update()
-                    QMessageBox.information(self, "Başarılı", f"'{item}' başarıyla silindi.")
+                    QMessageBox.information(self, "Başarılı", f"'{selected_name}' başarıyla silindi.")
         except Exception as e:
             QMessageBox.critical(self, "Hata", f"Silme işlemi başarısız oldu: {str(e)}")
 
     def export_full_graph_report(self):
         """Grafın tamamını içeren detaylı raporu dışa aktarır."""
-        """Ekranda bulunan tüm üniversite verilerini topluluk gözetmeksizin dışa aktarır."""
+
         if not self.graph.nodes:
             QMessageBox.warning(self, "Hata", "Dışa aktarılacak veri bulunamadı.")
             return

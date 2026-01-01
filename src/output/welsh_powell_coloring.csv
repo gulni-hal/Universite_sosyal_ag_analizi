@@ -1,20 +1,31 @@
 ﻿ID;Üniversite Adı;Şehir;Renk ID;Renk Adı;Komşular
 8;Kocaeli Üniversitesi;Kocaeli;1;Kırmızı;Gazi Üniversitesi, Hacettepe Üniversitesi, Koç Üniversitesi, Sakarya Üniversitesi, İstanbul Teknik Üniversitesi (İTÜ)
+112;Dokuz Eylül Üniversitesi;İzmir;1;Kırmızı;Alanya Alaadin Keykubat Üniversitesi, Ege Üniversitesi, Uşak Üniversitesi, İzmir Ekonomi Üniversitesi, İzmir Katip Çelebi Üniversitesi
+114;İzmir Katip Çelebi Üniversitesi;İzmir;2;Yeşil;Alanya Alaadin Keykubat Üniversitesi, Aydın Adnan Menderes Üniversitesi, Dokuz Eylül Üniversitesi, Muğla Sıtkı Koçman Üniversitesi, İzmir Ekonomi Üniversitesi
+149;Balıkesir Üniversitesi;Balıkesir;1;Kırmızı;Afyon Kocatepe Üniversitesi, Akdeniz Üniversitesi, Kütahya Dumlupınar Üniversitesi, Muğla Sıtkı Koçman Üniversitesi, Pamukkale Üniversitesi
 3;İstanbul Teknik Üniversitesi (İTÜ);İstanbul;2;Yeşil;Hacettepe Üniversitesi, Kocaeli Üniversitesi, Koç Üniversitesi, Marmara Üniversitesi
 15;Koç Üniversitesi;İstanbul;3;Mavi;Kocaeli Üniversitesi, Marmara Üniversitesi, İstanbul Teknik Üniversitesi (İTÜ), İstanbul Üniversitesi
-112;Dokuz Eylül Üniversitesi;İzmir;1;Kırmızı;Ege Üniversitesi, İzmir Ekonomi Üniversitesi, İzmir Katip Çelebi Üniversitesi, İzmir Yüksek Teknoloji Ensititüsü
+115;İzmir Ekonomi Üniversitesi;İzmir;3;Mavi;Dokuz Eylül Üniversitesi, Manisa Celal Bayar Üniversitesi, Uşak Üniversitesi, İzmir Katip Çelebi Üniversitesi
+125;Muğla Sıtkı Koçman Üniversitesi;Muğla;3;Mavi;Aydın Adnan Menderes Üniversitesi, Balıkesir Üniversitesi, İzmir Katip Çelebi Üniversitesi, İzmir Yüksek Teknoloji Ensititüsü
+154;Akdeniz Üniversitesi;Antalya;2;Yeşil;Antalya Bilim Üniversitesi, Aydın Adnan Menderes Üniversitesi, Balıkesir Üniversitesi, Kütahya Dumlupınar Üniversitesi
+155;Alanya Alaadin Keykubat Üniversitesi;Antalya ;3;Mavi;Burdur Mehmet Akif Ersoy Üniversitesi, Dokuz Eylül Üniversitesi, Manisa Celal Bayar Üniversitesi, İzmir Katip Çelebi Üniversitesi
 1;Hacettepe Üniversitesi;Ankara;3;Mavi;Ankara Üniversitesi, Kocaeli Üniversitesi, İstanbul Teknik Üniversitesi (İTÜ)
 5;İstanbul Üniversitesi;İstanbul;1;Kırmızı;Koç Üniversitesi, Marmara Üniversitesi, Sakarya Üniversitesi
 9;Sakarya Üniversitesi;Sakarya;2;Yeşil;Kocaeli Üniversitesi, Orta Doğu Teknik Üniversitesi (ODTÜ), İstanbul Üniversitesi
 17;Gazi Üniversitesi;Ankara;2;Yeşil;Ankara Üniversitesi, Kocaeli Üniversitesi, Orta Doğu Teknik Üniversitesi (ODTÜ)
-111;Ege Üniversitesi;İzmir;2;Yeşil;Dokuz Eylül Üniversitesi, İzmir Ekonomi Üniversitesi, İzmir Yüksek Teknoloji Ensititüsü
-113;İzmir Yüksek Teknoloji Ensititüsü;İzmir;3;Mavi;Dokuz Eylül Üniversitesi, Ege Üniversitesi, Muğla Sıtkı Koçman Üniversitesi
-114;İzmir Katip Çelebi Üniversitesi;İzmir;2;Yeşil;Dokuz Eylül Üniversitesi, Muğla Sıtkı Koçman Üniversitesi, İzmir Ekonomi Üniversitesi
-115;İzmir Ekonomi Üniversitesi;İzmir;3;Mavi;Dokuz Eylül Üniversitesi, Ege Üniversitesi, İzmir Katip Çelebi Üniversitesi
+111;Ege Üniversitesi;İzmir;2;Yeşil;Dokuz Eylül Üniversitesi, Uşak Üniversitesi, İzmir Yüksek Teknoloji Ensititüsü
+113;İzmir Yüksek Teknoloji Ensititüsü;İzmir;1;Kırmızı;Afyon Kocatepe Üniversitesi, Ege Üniversitesi, Muğla Sıtkı Koçman Üniversitesi
 126;Marmara Üniversitesi;İstanbul;4;Pembe;Koç Üniversitesi, İstanbul Teknik Üniversitesi (İTÜ), İstanbul Üniversitesi
+147;Aydın Adnan Menderes Üniversitesi;Aydın;1;Kırmızı;Akdeniz Üniversitesi, Muğla Sıtkı Koçman Üniversitesi, İzmir Katip Çelebi Üniversitesi
+150;Pamukkale Üniversitesi;Denizli;2;Yeşil;Balıkesir Üniversitesi, Burdur Mehmet Akif Ersoy Üniversitesi, Kütahya Dumlupınar Üniversitesi
+151;Kütahya Dumlupınar Üniversitesi;Kütahya;3;Mavi;Akdeniz Üniversitesi, Balıkesir Üniversitesi, Pamukkale Üniversitesi
+152;Uşak Üniversitesi;Uşak;4;Pembe;Dokuz Eylül Üniversitesi, Ege Üniversitesi, İzmir Ekonomi Üniversitesi
+153;Afyon Kocatepe Üniversitesi;Afyonkarahisar;2;Yeşil;Antalya Bilim Üniversitesi, Balıkesir Üniversitesi, İzmir Yüksek Teknoloji Ensititüsü
+156;Antalya Bilim Üniversitesi;Antalya;1;Kırmızı;Afyon Kocatepe Üniversitesi, Akdeniz Üniversitesi, Burdur Mehmet Akif Ersoy Üniversitesi
+157;Burdur Mehmet Akif Ersoy Üniversitesi;Burdur;4;Pembe;Alanya Alaadin Keykubat Üniversitesi, Antalya Bilim Üniversitesi, Pamukkale Üniversitesi
 4;Orta Doğu Teknik Üniversitesi (ODTÜ);Ankara;1;Kırmızı;Gazi Üniversitesi, Sakarya Üniversitesi
 18;Ankara Üniversitesi;Ankara;1;Kırmızı;Gazi Üniversitesi, Hacettepe Üniversitesi
-125;Muğla Sıtkı Koçman Üniversitesi;Muğla;1;Kırmızı;İzmir Katip Çelebi Üniversitesi, İzmir Yüksek Teknoloji Ensititüsü
-127;Harran Üniversitesi;Şanlıurfa;1;Kırmızı;Ağrı Doğu Beyazıt Üniversitesi, Iğdır Üniversitesi
-128;Iğdır Üniversitesi;Iğdır;2;Yeşil;Ağrı Doğu Beyazıt Üniversitesi, Harran Üniversitesi
-129;Ağrı Doğu Beyazıt Üniversitesi;Ağrı;3;Mavi;Harran Üniversitesi, Iğdır Üniversitesi
+127;Harran Üniversitesi;Şanlıurfa;1;Kırmızı;Ağrı İbrahim Çeçen Üniversitesi, Iğdır Üniversitesi
+128;Iğdır Üniversitesi;Iğdır;2;Yeşil;Ağrı İbrahim Çeçen Üniversitesi, Harran Üniversitesi
+129;Ağrı İbrahim Çeçen Üniversitesi;Ağrı;3;Mavi;Harran Üniversitesi, Iğdır Üniversitesi
+148;Manisa Celal Bayar Üniversitesi;Manisa;1;Kırmızı;Alanya Alaadin Keykubat Üniversitesi, İzmir Ekonomi Üniversitesi
