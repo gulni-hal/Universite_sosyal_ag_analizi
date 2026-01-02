@@ -1,22 +1,29 @@
 {
   "universiteler": [
     {
-      "uni_id": 130,
-      "adi": "Cerrahpaşa",
-      "sehir": "İstanbul",
-      "ilce": "Avcılar",
-      "kurulus_yil": 2018,
-      "ogrenci_sayisi": 25500,
-      "fakulte_sayisi": 9,
-      "akademik_sayisi": 2033,
-      "tr_siralama": 16
+      "uni_id": 8,
+      "adi": "Gebze Teknik Üniversitesi",
+      "sehir": "Kocaeli",
+      "ilce": "Gebze",
+      "kurulus_yil": 1992,
+      "ogrenci_sayisi": 10600,
+      "fakulte_sayisi": 5,
+      "akademik_sayisi": 766,
+      "tr_siralama": 8
     }
   ],
   "iliskiler": [
     {
-      "source_id": 130,
-      "target_id": 1
+      "source_id": 8,
+      "target_id": 3
+    },
+    {
+      "source_id": 8,
+      "target_id": 8
+    },
+    {
+      "source_id": 8,
+      "target_id": 9
     }
-    
   ]
 }
