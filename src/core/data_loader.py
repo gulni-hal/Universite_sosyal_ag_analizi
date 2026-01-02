@@ -42,7 +42,7 @@ class DataLoader:
                        )
                        """)
 
-        # İlişkiler (Edges) Tablosu - YENİ
+        # İlişkiler (Edges) Tablosu
         cursor.execute("""
                        CREATE TABLE IF NOT EXISTS Iliskiler
                        (
@@ -97,7 +97,7 @@ class DataLoader:
                 n2 = graph.nodes[v]
                 weight = graph.calculate_weight(n1, n2)
 
-                # SADECE BURADA GRAPH VE NETWORKX İKİSİNE DE KENAR EKLENİR
+                #GRAPH VE NETWORKX İKİSİNE DE KENAR EKLENİR
                 graph.add_edge(u, v)
                 G_nx.add_edge(u, v, weight=weight)
 
@@ -107,24 +107,55 @@ class DataLoader:
             # Eğer düğümler bir nedenden dolayı G_nx'e eklenmediyse, layout atlanır.
             return graph
 
-        # 3. Pozisyonlama (Layout) - Sadece düğüm varsa çalıştır
+        # 3. Pozisyonlama (Layout)
         if len(G_nx.nodes) > 0:
             try:
-                # weight=None  -> ÇOK ÖNEMLİ: Binlerce puanlık çekim gücünü iptal eder.
-                #                 Sadece "bağ var mı yok mu" ona bakar.
-                # k=0.7        -> İtme gücü. 0.7 düğümleri birbirinden net ayırır.
-                # scale=1000   -> Harita genişliği. Yazıların okunması için yeterli alan.
-                # iterations=100 -> Düğümlerin yerleşmesi için yeterli süre.
+                import math
 
-                pos = nx.spring_layout(G_nx, seed=42, k=0.7, iterations=100, scale=1000, weight=None)
+                components = list(nx.connected_components(G_nx))
 
-                # Haritayı tam merkeze oturtuyoruz
-                center_x, center_y = 1000, 800
 
-                for nid, p in pos.items():
-                    if nid in graph.nodes:
-                        graph.nodes[nid].x = int(center_x + p[0])
-                        graph.nodes[nid].y = int(center_y + p[1])
+                components.sort(key=len, reverse=True)
+
+                current_x_offset = 0  # X ekseninde nerede kaldığımızı tutar
+
+                # Ekranın dikey merkezi (Y ekseni)
+                center_y = 1000
+
+                for component in components:
+                    subgraph = G_nx.subgraph(component)
+                    n_count = len(subgraph)
+
+                    # --- FORMÜL: DÜĞÜM SAYISINA GÖRE BOYUT ---
+                    # Her topluluğun kaplayacağı alan (yarıçap) düğüm sayısıyla orantılı olsun.
+                    # Base (100): En küçük grup bile en az 100 birim yer kaplasın.
+                    # Çarpan (20): Her bir düğüm için alanı 20 birim genişlet.
+                    # Örn: 3 düğüm -> 160 birim yarıçap.
+                    #      75 düğüm -> 1600 birim yarıçap.
+                    radius = 100 + (n_count * 20)
+
+                    # İtme kuvvetini (k) de kalabalığa göre ayarla
+                    k_val = 15.0 / math.sqrt(n_count) if n_count > 0 else 1.0
+
+                    # Layout hesapla
+                    pos = nx.spring_layout(subgraph, seed=42, k=k_val, iterations=100, scale=radius, weight=None)
+
+                    # Koordinatları Ana Sisteme Ekle
+                    # current_x_offset: Önceki grupların bittiği yer
+                    # radius: Bu grubun kendi yarıçapı (Merkezi kaydırmak için ekliyoruz)
+                    group_center_x = current_x_offset + radius
+
+                    for nid, p in pos.items():
+                        if nid in graph.nodes:
+                            # p[0] ve p[1] zaten radius ile çarpılmış halde gelir (nx scale parametresi sayesinde)
+                            # Sadece X ekseninde öteleme yapıyoruz
+                            graph.nodes[nid].x = int(group_center_x + p[0])
+
+                            # Y ekseninde hepsi aynı hizada (ortada) dursun
+                            graph.nodes[nid].y = int(center_y + p[1])
+
+                    # Bir sonraki grup için imleci (offset) kaydır
+                    current_x_offset += (radius * 2) + 200
 
             except Exception as e:
                 print(f"Layout Hatası: {e}")
@@ -255,7 +286,7 @@ class DataLoader:
 
         except Exception as e:
             print(f"Bağlantı eklenirken DB hatası: {e}")
-            return None  # Teknik bir hata oluştu
+            return None
         finally:
             conn.close()
 
@@ -328,7 +359,7 @@ class DataLoader:
                     ranking = uni['tr_siralama']
                     uni_id = uni.get('uni_id')
 
-                    # 2. SIRALAMA ÇAKIŞMASI KONTROLÜ (GÜNCELLENDİ)
+                    # 2. SIRALAMA ÇAKIŞMASI KONTROLÜ
                     # Sadece ID farklı olup sıralama aynı olan bir kayıt var mı bakıyoruz
                     if uni_id is not None:
                         cursor.execute(
@@ -344,7 +375,7 @@ class DataLoader:
                     conflict = cursor.fetchone()
 
                     if conflict:
-                        conn.close()  # Bağlantıyı kapatıp hata fırlatıyoruz
+                        conn.close()
                         return False, f"Sıralama Çakışması: {ranking}. sıra zaten '{conflict[0]}' üniversitesine ait."
 
                     # 3. VERİ EKLEME (INSERT OR REPLACE yerine INSERT INTO ve UPDATE kontrolü)
@@ -383,7 +414,6 @@ class DataLoader:
         import sqlite3
 
         try:
-            # utf-8-sig: Türkçe karakterleri düzeltir
             with open(file_path, 'r', encoding='utf-8-sig') as f:
                 # Ayırıcıyı otomatik algıla
                 sample = f.read(1024)
@@ -399,7 +429,7 @@ class DataLoader:
             cursor = conn.cursor()
 
             required_fields = ['adi', 'sehir', 'ilce', 'tr_siralama']
-            pending_relations = []  # İlişkileri en son eklemek için burada tutacağız
+            pending_relations = []
 
             # --- 1. AŞAMA: Üniversiteleri (Düğümleri) Ekle ---
             for row in rows:

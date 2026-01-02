@@ -1,24 +1,16 @@
-# ui/main_window.py
-
 import sys
 import os
 import time
-
-# Proje ana dizinini
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QVBoxLayout,
-                             QHBoxLayout, QFrame, QPushButton, QMessageBox,
+from PyQt5.QtWidgets import (QMainWindow, QWidget,
+                             QHBoxLayout, QFrame, QPushButton,
                              QDockWidget, QApplication,
-                             QGraphicsDropShadowEffect, QInputDialog,
-                             QTableWidget, QTableWidgetItem, QHeaderView, QDialog, QScrollArea, QDialogButtonBox,
-                             QComboBox,QCompleter)
+                             QGraphicsDropShadowEffect,
+                             QTableWidget, QTableWidgetItem, QHeaderView, QScrollArea)
 from PyQt5.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, pyqtProperty
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QComboBox, QLabel, QDialogButtonBox, QMessageBox, QCompleter
 from PyQt5.QtGui import  QFont, QPalette, QColor, QLinearGradient, QPainter
-
-# --- EKSİK OLAN IMPORTLAR BURADA ---
-# Bu satırları eklediğinde kırmızı çizgiler kaybolacak:
 from core.node import Node
 from core.graph import Graph
 from core.algorithms import (
@@ -28,14 +20,11 @@ from core.algorithms import (
     AStarAlgorithm,
     WelshPowellAlgorithm
 )
-
-# Diğer UI modülleri
 from .graph_canvas import GraphCanvas
 from .add_node_dialog import AddNodeDialog
 from .coloring_dialog import ColoringDialog
 from .path_dialog import PathDialog
 from .add_edge_dialog import AddEdgeDialog
-
 
 
 class ModernButton(QPushButton):
@@ -105,11 +94,10 @@ class CardWidget(QFrame):
         layout = QVBoxLayout()
         layout.setContentsMargins(20, 20, 20, 20)
 
-        # 🔽 🔽 🔽 EN ÖNEMLİ DEĞİŞİKLİK 🔽 🔽 🔽
         self.title_label = None
 
         if title:
-            self.title_label = QLabel(title)   # 👈 self. EKLENDİ
+            self.title_label = QLabel(title)
             self.title_label.setStyleSheet("""
                 QLabel {
                     font-size: 16px;
@@ -257,7 +245,7 @@ class MainWindow(QMainWindow):
         self.sidebar.setFeatures(QDockWidget.DockWidgetMovable)
         self.sidebar.setFixedWidth(300)
 
-        # --- DEĞİŞİKLİK 1: Scroll Area ekle ---
+        # Scroll Area ekle
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -292,9 +280,8 @@ class MainWindow(QMainWindow):
         content.setStyleSheet("background-color: white;")
         layout = QVBoxLayout(content)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)  # Elemanlar arası boşluğu kaldır
+        layout.setSpacing(0)
 
-        # --- MEVCUT İÇERİK (Değişmeden kalıyor) ---
         lbl_algo = QLabel("ALGORİTMALAR")
         lbl_algo.setAlignment(Qt.AlignCenter)
         lbl_algo.setFixedHeight(45)
@@ -348,7 +335,7 @@ class MainWindow(QMainWindow):
             btn.clicked.connect(func)
             layout.addWidget(btn)
 
-        # --- DEĞİŞİKLİK 2: Esnek boşluk ekle ---
+        # Esnek boşluk ekle
         layout.addStretch()
 
         # --- Alt bilgi ---
@@ -357,7 +344,7 @@ class MainWindow(QMainWindow):
         lbl_footer.setStyleSheet("padding: 10px; color: #888; border-top: 1px solid #eee;")
         layout.addWidget(lbl_footer)
 
-        # --- DEĞİŞİKLİK 3: Scroll area'ya içeriği ekle ---
+        # Scroll area'ya içeriği ekle
         scroll_area.setWidget(content)
         self.sidebar.setWidget(scroll_area)  # content yerine scroll_area set ediyoruz
         self.addDockWidget(Qt.LeftDockWidgetArea, self.sidebar)
@@ -475,8 +462,6 @@ class MainWindow(QMainWindow):
     # İŞLEV FONKSİYONLARI (ZAMAN ÖLÇÜMLÜ)
     # ==========================================================
 
-    # main_window.py içindeki metod güncellemesi
-
     def show_node_details(self, node):
         self.selected_node = node
         self.selected_edge = None
@@ -570,7 +555,7 @@ class MainWindow(QMainWindow):
             if dialog.exec_():
                 u1_id, u2_id = dialog.get_data()
 
-                # --- KONTROL 1: Aynı üniversite seçimi ---
+                # Aynı üniversite seçimi
                 if u1_id == u2_id:
                     QMessageBox.warning(self, "Hata", "Aynı üniversiteyi seçtiniz. Lütfen farklı iki üniversite seçin.")
                     return
@@ -584,7 +569,7 @@ class MainWindow(QMainWindow):
                         break
 
                 if edge_to_remove:
-                    # --- KONTROL 2: Silme Onayı ---
+                    #  Silme Onayı
                     confirm_msg = f"{edge_to_remove.node1.adi} ve {edge_to_remove.node2.adi} arasındaki bağlantı silinecek. Onaylıyor musunuz?"
                     reply = QMessageBox.question(self, 'Onay', confirm_msg, QMessageBox.Yes | QMessageBox.No,
                                                  QMessageBox.No)
@@ -688,10 +673,7 @@ class MainWindow(QMainWindow):
                 if start_id == end_id:
                     QMessageBox.warning(self, "Hata", "Başlangıç ve Bitiş aynı olamaz.")
                     return
-
-                # --- ÖNCE TEMİZLE ---
                 self.reset_visuals()
-                # --------------------
 
                 start_time = time.perf_counter()
 
@@ -702,9 +684,7 @@ class MainWindow(QMainWindow):
                     strategy = AStarAlgorithm()
 
                 # Graph içindeki soyut metodu çağırıyoruz
-                # Artık self.graph.dijkstra() yerine soyut yapıyı kullanıyoruz
                 cost, path = self.graph.run_algorithm(strategy, start_id, end_id)
-                # ---------------------------
 
                 elapsed = time.perf_counter() - start_time
 
@@ -723,16 +703,14 @@ class MainWindow(QMainWindow):
         """Welsh-Powell Renklendirme (Abstract/Strategy Yapısıyla)"""
         if not self.graph.nodes: return
 
-        # --- ÖNCE TEMİZLE ---
         self.reset_visuals()
-        # --------------------
 
         try:
             start_time = time.perf_counter()
 
-            # --- DEĞİŞİKLİK BURADA: Strategy Pattern Kullanımı ---
-            strategy = WelshPowellAlgorithm()  # Strateji nesnesini oluştur
-            new_coloring = self.graph.run_coloring_algorithm(strategy)  # Graph üzerinden çalıştır
+            # Strategy Pattern Kullanımı
+            strategy = WelshPowellAlgorithm()
+            new_coloring = self.graph.run_coloring_algorithm(strategy)
             # ----------------------------------------------------
 
             elapsed = time.perf_counter() - start_time
@@ -759,7 +737,6 @@ class MainWindow(QMainWindow):
         comps = self.graph.find_connected_components()
         elapsed = time.perf_counter() - start_time
 
-        # Mesaj içeriği hazırlama (mevcut kodunuzla aynı)
         msg = f" Analiz Süresi: {elapsed:.6f} saniye\n"
         msg += f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         msg += f"Toplam {len(comps)} adet ayrık topluluk bulundu.\n\n"
@@ -780,7 +757,6 @@ class MainWindow(QMainWindow):
             try:
                 from core.exporter import Exporter
                 exporter = Exporter()
-                # DİKKAT: Artık ilk parametre olarak self.graph gönderiyoruz
                 path = exporter.export_communities_to_csv(self.graph, comps)
                 QMessageBox.information(self, "Başarılı", f"Rapor tablo formatında dışa aktarıldı:\n{path}")
             except Exception as e:
@@ -846,10 +822,8 @@ class MainWindow(QMainWindow):
         if not self.selected_node:
             QMessageBox.warning(self, "Uyarı", "Lütfen önce haritadan bir Başlangıç Düğümü seçin.")
             return
-
-        # --- ÖNCE TEMİZLE ---
         self.reset_visuals()
-        # --------------------
+
 
         start_id = self.selected_node.uni_id
         start_time = time.perf_counter()
@@ -862,7 +836,6 @@ class MainWindow(QMainWindow):
 
         # Algoritmayı soyut nesne üzerinden çalıştırıyoruz
         self.animation_sequence = self.graph.run_algorithm(strategy, start_id)
-        # ---------------------------
 
         elapsed = time.perf_counter() - start_time
 
@@ -894,8 +867,8 @@ class MainWindow(QMainWindow):
         self.canvas.highlighted_path = []
 
         # 3. Renklendirmeyi temizle
-        # self.canvas.coloring_result = {}
-        # self.coloring_result = {}
+        self.canvas.coloring_result = {}
+        self.coloring_result = {}
 
         # 4. Canvas'ı yenile
         self.canvas.update()
@@ -929,7 +902,6 @@ class MainWindow(QMainWindow):
         self.btn_delete.setEnabled(True)
         self.btn_delete.setText("Bağlantıyı Sil")
 
-        # Sil butonunu delete_selected_edge fonksiyonuna bağla
         try:
             self.btn_delete.clicked.disconnect()
         except:
@@ -943,7 +915,7 @@ class MainWindow(QMainWindow):
             if label.text() in ["Üniversite:", "Bağlantı:", "Sıralama:", "Ağırlık:"]:
                 if text in [label.text()]:
                     return label
-        return QLabel()  # Güvenlik için boş etiket dön
+        return QLabel()
 
     def delete_selected_edge(self):
         """Seçili kenarı güvenli bir şekilde siler ve UI'yı temizler."""
@@ -975,9 +947,9 @@ class MainWindow(QMainWindow):
 
                 # 4. Seçimi ve UI Panelini temizle
                 self.selected_edge = None
-                self.reset_visuals()  # Görsel efektleri temizler
+                self.reset_visuals()
 
-                # Detay panelini sıfırla (Çökmeyi önlemek için)
+                # Detay panelini sıfırla
                 for key in self.detail_labels:
                     self.detail_labels[key].setText("-")
                 self.detail_titles["name"].setText("Bağlantı:")
@@ -1005,7 +977,7 @@ class MainWindow(QMainWindow):
 
             combo = QComboBox()
             combo.setEditable(True)
-            combo.setMaxVisibleItems(15)  # 15 öğeden sonra scroll bar çıkar
+            combo.setMaxVisibleItems(15)
 
             sorted_data = sorted(uni_data, key=lambda x: x[1])
             for u_id, u_name in sorted_data:
@@ -1067,7 +1039,6 @@ class MainWindow(QMainWindow):
         file_path, _ = QFileDialog.getOpenFileName(self, "JSON Seç", "", "JSON (*.json)")
 
         if file_path:
-            # data_loader'dan gelen başarı durumu ve hata mesajını al
             success, message = self.loader.import_from_json(file_path)
 
             if success:

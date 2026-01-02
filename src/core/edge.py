@@ -14,3 +14,5 @@ class Edge:
 
     def get_nodes(self):
         return self.node1, self.node2
+
+

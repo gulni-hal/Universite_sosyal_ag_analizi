@@ -59,9 +59,6 @@ class Graph:
         fark_siralama = (n1.tr_siralama - n2.tr_siralama) ** 2
         fark_yil = (n1.kurulus_yil - n2.kurulus_yil) ** 2
 
-        # Farkları biraz normalize edelim ki öğrenci sayısı baskın çıkmasın
-        # (İsteğe bağlı, pdf formülünde direkt toplam yazıyor ama pratikte scale gerekebilir)
-        # Şimdilik PDF'e %100 sadık kalalım:
         total = (fark_ogrenci + fark_siralama + fark_yil)/100
         return 1 + math.sqrt(total)
 

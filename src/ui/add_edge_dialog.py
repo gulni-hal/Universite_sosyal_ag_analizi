@@ -14,16 +14,16 @@ class AddEdgeDialog(QDialog):
 
         # Kaydırma ve Arama Özellikleri Ayarı
         for combo in [self.combo1, self.combo2]:
-            combo.setEditable(True)  # Yazarak arama yapabilmek için
+            combo.setEditable(True)
             combo.setInsertPolicy(QComboBox.NoInsert)
 
 
             completer = combo.completer()
             completer.setCompletionMode(QCompleter.PopupCompletion)
-            completer.setFilterMode(Qt.MatchContains)  # Kelime içinden arama yapar
+            completer.setFilterMode(Qt.MatchContains)
 
             combo.setMaxVisibleItems(12)  # 12 öğeden sonra scroll bar çıkar
-            combo.setStyleSheet("QComboBox { combobox-popup: 0; }")  # Scroll barı aktif eder
+            combo.setStyleSheet("QComboBox { combobox-popup: 0; }")
 
         # Üniversiteleri isme göre sıralayarak ekle
         sorted_nodes = sorted(nodes.values(), key=lambda x: x.adi)

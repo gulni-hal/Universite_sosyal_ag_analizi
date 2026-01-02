@@ -21,7 +21,7 @@ if __name__ == "__main__":
     # Grafı yükle
     loader.load_graph(graph)
 
-    # Pencereyi aç (Loader parametresini ekledik!)
+    # Pencereyi aç
     window = MainWindow(graph, loader)
     window.show()
 

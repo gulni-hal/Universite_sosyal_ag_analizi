@@ -1,9 +1,5 @@
 import sqlite3
 import os
-
-# main.py'deki yol ile aynı şekilde hesaplayın.
-# Eğer main.py src/ klasöründeyse, bu yol src'nin bir üst klasöründeki data klasörüne işaret eder.
-# Bu kısmı kendi dosya yapınıza göre ayarlamanız gerekebilir.
 db_path = os.path.join(os.getcwd(), "data", "universite.db")
 print(f"Veritabanı yolu kontrol ediliyor: {db_path}")
 

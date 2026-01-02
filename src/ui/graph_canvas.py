@@ -29,8 +29,6 @@ class GraphCanvas(QWidget):
         self.on_edge_clicked = on_edge_clicked  # Yeni callback
         self.selected_edge = None
 
-        # --- YENİ: Vurgulanacak yol listesi ---
-        # Format: [Node1, Node2, Node3...]
         self.highlighted_path = []
 
         self.node_radius = 20
@@ -70,13 +68,13 @@ class GraphCanvas(QWidget):
         graph_width = max(max_x - min_x, 100)
         graph_height = max(max_y - min_y, 100)
 
-        # Padding değerini biraz artırarak düğümlerin kenara yapışmasını engelleyelim
+        # Padding değerini biraz artırarak düğümlerin kenara yapışmasını engeller
         padding = 200
 
         scale_x = self.width() / (graph_width + padding)
         scale_y = self.height() / (graph_height + padding)
 
-        # ÖNEMLİ: Ölçeğin çok küçülüp her şeyi birbirine sokmasını engelle
+        # Ölçeğin çok küçülüp her şeyi birbirine sokmasını engeller
         new_scale = min(scale_x, scale_y)
         if new_scale < 0.05: new_scale = 0.05
         if new_scale > 2.0: new_scale = 2.0
@@ -94,7 +92,7 @@ class GraphCanvas(QWidget):
         self.update()
 
     def paintEvent(self, event):
-        import math  # Matematik kütüphanesini burada veya en üstte import et
+        import math
 
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
@@ -107,7 +105,7 @@ class GraphCanvas(QWidget):
         painter.setPen(pen_edge)
 
         font = painter.font()
-        font.setPointSize(9)  # Yazı boyutu
+        font.setPointSize(9)
         painter.setFont(font)
 
         for edge in self.graph.edges:
@@ -157,7 +155,7 @@ class GraphCanvas(QWidget):
                 painter.drawLine(int(start_x2), int(start_y2), int(x2), int(y2))
 
                 # --- EĞİMLİ YAZI ---
-                painter.save()  # Koordinat sistemini kaydet
+                painter.save()
 
                 # Merkeze git
                 painter.translate(mid_x, mid_y)
@@ -165,11 +163,11 @@ class GraphCanvas(QWidget):
                 # Açıyı hesapla (radyan -> derece)
                 angle_deg = math.degrees(math.atan2(dy, dx))
 
-                # Yazının ters durmaması için kontrol (Okunabilirlik)
+                # Yazının ters durmaması için kontrol
                 if abs(angle_deg) > 90:
                     angle_deg += 180
 
-                painter.rotate(angle_deg)  # Çizgiye paralel döndür
+                painter.rotate(angle_deg)
 
                 # Yazıyı çiz (0,0 artık orta nokta)
                 painter.setPen(QPen(Qt.darkBlue))
@@ -183,7 +181,7 @@ class GraphCanvas(QWidget):
                 # (x, y) -> Hafif yukarı kaydırarak tam ortaya koy
                 painter.drawText(int(-text_w / 2), int(text_h / 4), weight_text)
 
-                painter.restore()  # Koordinat sistemini geri yükle
+                painter.restore()
 
         # 2. Vurgulanan Yol (Dijkstra - Kırmızı)
         if self.highlighted_path and len(self.highlighted_path) > 1:
@@ -231,7 +229,6 @@ class GraphCanvas(QWidget):
 
         painter.restore()
 
-    # (Mouse olayları aynı kalıyor, buraya tekrar yazmıyorum yer kaplamasın diye)
     def wheelEvent(self, event):
         if event.angleDelta().y() > 0:
             self.scale_factor *= 1.1
@@ -268,7 +265,7 @@ class GraphCanvas(QWidget):
             self.check_edge_click(real_x, real_y)
 
     def check_edge_click(self, x, y):
-        threshold = 5.0  # Tıklama hassasiyeti (pixel)
+        threshold = 5.0
         for edge in self.graph.edges:
             x1, y1 = edge.node1.x, edge.node1.y
             x2, y2 = edge.node2.x, edge.node2.y

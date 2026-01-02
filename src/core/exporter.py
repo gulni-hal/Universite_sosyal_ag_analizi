@@ -47,8 +47,6 @@ class Exporter:
         except Exception as e:
             raise Exception(f"CSV hatası: {e}")
 
-    # core/exporter.py içine eklenecek metot:
-
     def export_centrality_to_csv(self, data, filename="etki_analizi.csv"):
         """
         Merkezilik analizi sonuçlarını (derece ve ağırlıklar) CSV olarak dışa aktarır.
@@ -60,12 +58,9 @@ class Exporter:
         output_path = os.path.join(self.output_dir, filename)
 
         try:
-            # Excel'de Türkçe karakter sorunu olmaması için 'utf-8-sig' ve ';' ayırıcı kullanıyoruz
             with open(output_path, 'w', newline='', encoding='utf-8-sig') as csvfile:
-                # Sadece elimizdeki verileri yazıyoruz, 'Komşular' vs. yok
                 fieldnames = ['Sıra', 'Üniversite Adı', 'Şehir', 'Derece (Bağlantı Sayısı)', 'Toplam Ağırlık']
 
-                # delimiter=';' Excel'in sütunları doğru tanıması için önemlidir
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=';')
 
                 writer.writeheader()
@@ -80,10 +75,6 @@ class Exporter:
             return output_path
         except Exception as e:
             raise Exception(f"Merkezilik CSV hatası: {e}")
-
-    # core/exporter.py içindeki Exporter sınıfına ekle
-
-    # core/exporter.py içindeki export_communities_to_csv metodunu bununla değiştirin:
 
     def export_communities_to_csv(self, graph, components, filename="topluluk_analizi.csv"):
         output_path = os.path.join(self.output_dir, filename)
@@ -111,7 +102,6 @@ class Exporter:
         except Exception as e:
             raise Exception(f"Topluluk CSV hatası: {e}")
 
-    # core/exporter.py
 
     def export_graph_to_csv(self, graph, filename="universite_liste_raporu.csv"):
         """Graf üzerindeki tüm düğümlerin detaylı bilgilerini dışa aktarır."""

@@ -105,7 +105,7 @@ class AddNodeDialog(QDialog):
         if self.inp_akademik.value() <= 0: errors.append("Akademik Personel 0 olamaz")
         if self.inp_fakulte.value() <= 0: errors.append("Fakülte Sayısı 0 olamaz")
 
-        # 3. TR Sıralaması Mükerrer Kontrolü (YENİ)
+        # 3. TR Sıralaması Mükerrer Kontrolü
         ranking = self.inp_siralama.value()
         if self.loader and self.loader.is_ranking_taken(ranking, self.edit_id):
             errors.append(f"TR Sıralaması #{ranking} zaten başka bir üniversiteye atanmış!")
